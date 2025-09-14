@@ -4,4 +4,4 @@ export default function ProposalPage() {
       <h1>Proposal Page</h1>
     </div>
   );
-};
+}

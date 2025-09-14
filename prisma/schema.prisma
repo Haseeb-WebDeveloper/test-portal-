@@ -12,8 +12,7 @@ model User {
   id                  String                 @id @default(uuid())
   authId              String                 @unique
   email               String                 @unique
-  firstName           String
-  lastName            String
+  name                String
   avatar              String?
   role                UserRole
   isActive            Boolean                @default(true)
@@ -22,7 +21,6 @@ model User {
   createdBy           String?
   updatedBy           String?
   deletedAt           DateTime?
-  activities          Activity[]
   agencyMembership    AgencyMembership?
   clientMemberships   ClientMembership[]
   contractAssignments ContractAssignment[]
@@ -30,7 +28,6 @@ model User {
   messages            Message[]
   createdNews         News[]                 @relation("NewsCreator")
   createdProposals    Proposal[]             @relation("ProposalCreator")
-  grantedPermissions  Permission[]           @relation("PermissionGranter")
   permissions         Permission[]
   roomParticipants    RoomParticipant[]
   assignedTasks       Task[]                 @relation("TaskAssignee")
@@ -44,21 +41,22 @@ model User {
   @@map("users")
 }
 
+
 model Client {
-  id          String               @id @default(uuid())
+  id          String             @id @default(uuid())
   name        String
   description String?
   website     String?
-  logo        String?
-  isActive    Boolean              @default(true)
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  avatar        String?
+  isActive    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
   createdBy   String?
   updatedBy   String?
   deletedAt   DateTime?
   memberships ClientMembership[]
   contracts   Contract[]
-  proposals   Proposal[]
+  proposals      Proposal[]
   rooms       Room[]
 
   @@index([name])
@@ -105,34 +103,33 @@ model AgencyMembership {
 }
 
 model Contract {
-  id                 String                 @id @default(uuid())
+  id                 String               @id @default(uuid())
   clientId           String
   title              String
   description        String?
-  status             ContractStatus         @default(DRAFT)
+  status             ContractStatus       @default(DRAFT)
   startDate          DateTime?
   endDate            DateTime?
-  currency           String                 @default("USD")
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
+  currency           String               @default("USD")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
   createdBy          String?
   updatedBy          String?
   deletedAt          DateTime?
-  actualHours        Int                    @default(0)
-  budget             Decimal?               @db.Decimal(10, 2)
+  actualHours        Int                  @default(0)
+  budget             Decimal?             @db.Decimal(10, 2)
   estimatedHours     Int?
-  priority           Int                    @default(3)
-  progressPercentage Int                    @default(0)
+  priority           Int                  @default(3)
+  progressPercentage Int                  @default(0)
   tags               String[]
   media              Json?
-  activities         Activity[]
   assignments        ContractAssignment[]
-  client             Client                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  creator            User?                  @relation("ContractCreator", fields: [createdBy], references: [id])
+  client             Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  creator            User?                @relation("ContractCreator", fields: [createdBy], references: [id])
   messages           Message[]
   rooms              Room[]
   tasks              Task[]
-  proposals          Proposal[]             @relation("ProposalToContract")
+  proposals             Proposal[]              @relation("ProposalToContract")
 
   @@index([clientId])
   @@index([status])
@@ -195,28 +192,26 @@ model Task {
 }
 
 model Proposal {
-  id          String        @id @default(uuid())
+  id          String      @id @default(uuid())
   clientId    String
   title       String
   description String?
   status      ProposalStatus @default(DRAFT)
-  validUntil  DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   createdBy   String?
   updatedBy   String?
   deletedAt   DateTime?
-  hasReviewed Boolean       @default(false)
+  hasReviewed Boolean     @default(false)
   tags        String[]
   media       Json?
-  client      Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  creator     User?         @relation("ProposalCreator", fields: [createdBy], references: [id])
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  creator     User?       @relation("ProposalCreator", fields: [createdBy], references: [id])
   rooms       Room[]
-  contracts   Contract[]    @relation("ProposalToContract")
+  contracts   Contract[]  @relation("ProposalToContract")
 
   @@index([clientId])
   @@index([status])
-  @@index([validUntil])
   @@index([hasReviewed])
   @@index([updatedAt])
   @@index([title])
@@ -231,15 +226,16 @@ model Room {
   type         RoomType
   clientId     String?
   isActive     Boolean           @default(true)
+  isArchived   Boolean           @default(false)
+  lastMessageAt DateTime?        // For sorting rooms by last activity
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   createdBy    String?
   updatedBy    String?
   deletedAt    DateTime?
+  avatar         String?
   contractId   String?
-  logo         String?
   proposalId   String?
-  activities   Activity[]
   messages     Message[]
   participants RoomParticipant[]
   client       Client?           @relation(fields: [clientId], references: [id])
@@ -250,6 +246,9 @@ model Room {
   @@index([contractId])
   @@index([clientId])
   @@index([proposalId])
+  @@index([isActive])
+  @@index([isArchived])
+  @@index([lastMessageAt])
   @@index([deletedAt])
   @@map("rooms")
 }
@@ -258,6 +257,7 @@ model RoomParticipant {
   id         String         @id @default(uuid())
   roomId     String
   userId     String
+
   permission PermissionType @default(READ)
   joinedAt   DateTime       @default(now())
   isActive   Boolean        @default(true)
@@ -282,9 +282,11 @@ model Message {
   id          String              @id @default(uuid())
   roomId      String
   userId      String
-  content     String
+  content     String?
   parentId    String?
   isEdited    Boolean             @default(false)
+  isDeleted   Boolean             @default(false)
+  messageType MessageType         @default(TEXT)
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
   createdBy   String?
@@ -303,6 +305,8 @@ model Message {
   @@index([userId])
   @@index([contractId])
   @@index([parentId])
+  @@index([messageType])
+  @@index([isDeleted])
   @@index([deletedAt])
   @@map("messages")
 }
@@ -316,42 +320,14 @@ model MessageAttachment {
   mimeType  String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  createdBy String?
-  updatedBy String?
-  deletedAt DateTime?
   message   Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@index([messageId])
-  @@index([deletedAt])
+  @@index([mimeType])
   @@map("message_attachments")
 }
 
-model Activity {
-  id         String       @id @default(uuid())
-  actorId    String
-  verb       ActivityVerb
-  targetType String
-  targetId   String
-  metadata   Json?
-  roomId     String?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  createdBy  String?
-  updatedBy  String?
-  deletedAt  DateTime?
-  contractId String?
-  actor      User         @relation(fields: [actorId], references: [id], onDelete: Cascade)
-  contract   Contract?    @relation(fields: [contractId], references: [id])
-  room       Room?        @relation(fields: [roomId], references: [id])
 
-  @@index([actorId])
-  @@index([targetType, targetId])
-  @@index([contractId])
-  @@index([roomId])
-  @@index([createdAt])
-  @@index([deletedAt])
-  @@map("activities")
-}
 
 model Permission {
   id           String         @id @default(uuid())
@@ -359,22 +335,14 @@ model Permission {
   resourceType String
   resourceId   String
   permission   PermissionType
-  grantedBy    String
-  expiresAt    DateTime?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
-  createdBy    String?
-  updatedBy    String?
-  deletedAt    DateTime?
-  granter      User           @relation("PermissionGranter", fields: [grantedBy], references: [id])
   user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, resourceType, resourceId])
   @@index([userId])
   @@index([resourceType, resourceId])
   @@index([permission])
-  @@index([expiresAt])
-  @@index([deletedAt])
   @@map("permissions")
 }
 
@@ -441,25 +409,6 @@ enum RoomType {
   AGENCY_INTERNAL
 }
 
-enum ActivityVerb {
-  CREATED
-  UPDATED
-  DELETED
-  STATUS_CHANGED
-  ASSIGNED
-  UNASSIGNED
-  MESSAGE_SENT
-  FILE_UPLOADED
-  FILE_DOWNLOADED
-  CONTRACT_SIGNED
-  PROPOSAL_ACCEPTED
-  PROPOSAL_DECLINED
-  TASK_CREATED
-  TASK_UPDATED
-  TASK_COMPLETED
-  TASK_ASSIGNED
-  TASK_UNASSIGNED
-}
 
 enum PermissionType {
   READ
@@ -475,4 +424,10 @@ enum TaskStatus {
   COMPLETED
   CANCELLED
   ON_HOLD
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  SYSTEM
 }

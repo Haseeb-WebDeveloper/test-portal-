@@ -23,21 +23,6 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${origin}/unauthorized`)
       }
 
-      // Log successful login
-      await prisma.activity.create({
-        data: {
-          actorId: existingUser.id,
-          verb: 'MESSAGE_SENT', // Using MESSAGE_SENT as a general activity for login
-          targetType: 'user',
-          targetId: existingUser.id,
-          metadata: {
-            action: 'user_login',
-            method: 'magic_link'
-          },
-          createdBy: existingUser.id,
-          updatedBy: existingUser.id
-        }
-      })
 
       // Redirect based on user role
       let redirectPath = redirectTo

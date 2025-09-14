@@ -4,4 +4,4 @@ export default function ClientPage() {
       <h1>Client Page</h1>
     </div>
   );
-};
+}

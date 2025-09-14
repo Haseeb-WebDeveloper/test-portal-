@@ -22,8 +22,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 interface PortalLayoutProps {
   children: React.ReactNode;
   user: {
-    firstName: string;
-    lastName: string;
+    name: string;
     avatar: string | null;
     role: string;
   };
@@ -111,15 +110,15 @@ export function PortalLayout({ children, user }: PortalLayoutProps) {
             <Avatar className="w-8 h-8">
               <AvatarImage
                 src={user.avatar || ""}
-                alt={`${user.firstName} ${user.lastName}`}
+                alt={`${user.name}`}
               />
               <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
-                {user.firstName.charAt(0)}
+                {user.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-sidebar-foreground line-clamp-1">
-                {user.firstName} {user.lastName}
+                {user.name}
               </span>
               <span className="text-xs text-sidebar-foreground/70 capitalize">
                 {user.role.toLowerCase().replace('_', ' ')}
@@ -132,7 +131,7 @@ export function PortalLayout({ children, user }: PortalLayoutProps) {
     
     SidebarComponent.displayName = 'SidebarContent';
     return SidebarComponent;
-  }, [items, pathname, user.avatar, user.firstName, user.lastName, user.role, handleNavigation]);
+  }, [items, pathname, user.avatar, user.name, user.role, handleNavigation]);
 
   return (
     <div className="min-h-screen h-full bg-gradient-to-b from-[#0A031C] to-[#000000] text-foreground">

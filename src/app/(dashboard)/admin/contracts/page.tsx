@@ -4,4 +4,4 @@ export default function ContractsPage() {
       <h1>Contracts Page</h1>
     </div>
   );
-};
+}

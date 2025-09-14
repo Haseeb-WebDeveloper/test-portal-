@@ -8,8 +8,7 @@ export async function GET() {
     // Return only serializable user data
     return NextResponse.json({
       id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      name: user.name,
       avatar: user.avatar,
       role: user.role,
       isActive: user.isActive,

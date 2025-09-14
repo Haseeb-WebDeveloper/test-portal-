@@ -1,0 +1,35 @@
+import React from "react";
+import { MessageSquare, Users, FileText } from "lucide-react";
+
+export default function ChatAbout() {
+	return (
+		<div className="flex-1 flex items-center justify-center bg-gray-900">
+			<div className="text-center space-y-8 max-w-md">
+				<div className="space-y-4">
+					<div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto">
+						<MessageSquare className="w-8 h-8 text-white" />
+					</div>
+					<h1 className="text-3xl font-bold text-white">Select a Room</h1>
+					<p className="text-gray-400">
+						Choose a conversation from the sidebar to start messaging
+					</p>
+				</div>
+				
+				<div className="space-y-4 text-left">
+					<div className="flex items-center space-x-3 text-gray-300">
+						<Users className="w-5 h-5 text-purple-400" />
+						<span>Client discussions and project updates</span>
+					</div>
+					<div className="flex items-center space-x-3 text-gray-300">
+						<FileText className="w-5 h-5 text-purple-400" />
+						<span>Contract and proposal conversations</span>
+					</div>
+					<div className="flex items-center space-x-3 text-gray-300">
+						<MessageSquare className="w-5 h-5 text-purple-400" />
+						<span>Internal team communications</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}

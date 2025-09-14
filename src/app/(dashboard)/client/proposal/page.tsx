@@ -4,4 +4,4 @@ export default function ClientProposalPage() {
       <h1>Proposal Page</h1>
     </div>
   );
-};
+}

@@ -36,8 +36,7 @@ const prisma = new PrismaClient()
 
 interface AdminUserData {
   email: string
-  firstName: string
-  lastName: string
+  name: string
   password?: string
   agencyFunction?: AgencyMemberFunction
 }
@@ -53,8 +52,7 @@ async function createAdminUser(userData: AdminUserData) {
       password: userData.password || generateRandomPassword(),
       email_confirm: true, // Auto-confirm the email
       user_metadata: {
-        first_name: userData.firstName,
-        last_name: userData.lastName,
+        name: userData.name,
         role: 'PLATFORM_ADMIN'
       }
     })
@@ -75,8 +73,7 @@ async function createAdminUser(userData: AdminUserData) {
       data: {
         authId: authData.user.id,
         email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
+        name: userData.name,
         role: UserRole.PLATFORM_ADMIN,
         isActive: true,
         createdBy: authData.user.id, // Self-created
@@ -100,32 +97,14 @@ async function createAdminUser(userData: AdminUserData) {
 
     console.log('✅ Agency membership created:', agencyMembership.id)
 
-    // Step 4: Create activity log
-    console.log('📝 Creating activity log...')
-    await prisma.activity.create({
-      data: {
-        actorId: dbUser.id,
-        verb: 'CREATED',
-        targetType: 'user',
-        targetId: dbUser.id,
-        metadata: {
-          action: 'admin_account_created',
-          email: userData.email,
-          role: 'PLATFORM_ADMIN'
-        },
-        createdBy: dbUser.id,
-        updatedBy: dbUser.id
-      }
-    })
 
-    console.log('✅ Activity logged')
 
     console.log('\n🎉 Admin user created successfully!')
     console.log('📋 User Details:')
     console.log(`   ID: ${dbUser.id}`)
     console.log(`   Auth ID: ${authData.user.id}`)
     console.log(`   Email: ${dbUser.email}`)
-    console.log(`   Name: ${dbUser.firstName} ${dbUser.lastName}`)
+    console.log(`   Name: ${dbUser.name}`)
     console.log(`   Role: ${dbUser.role}`)
     console.log(`   Agency Function: ${agencyMembership.function}`)
     
@@ -180,14 +159,13 @@ async function main() {
 
   // Get user input
   const email = process.argv[2]
-  const firstName = process.argv[3]
-  const lastName = process.argv[4]
+  const name = process.argv[3]
   const agencyFunction = process.argv[5] as AgencyMemberFunction
 
-  if (!email || !firstName || !lastName) {
-    console.log('Usage: bun run src/scripts/create-admin.ts <email> <firstName> <lastName> [agencyFunction]')
+  if (!email || !name) {
+    console.log('Usage: bun run src/scripts/create-admin.ts <email> <name> [agencyFunction]')
     console.log('\nExample:')
-    console.log('bun run src/scripts/create-admin.ts admin@agency.com "John" "Doe" "CREATIVE_DIRECTOR"')
+    console.log('bun run src/scripts/create-admin.ts admin@agency.com "John" "CREATIVE_DIRECTOR"')
     console.log('\nAvailable agency functions:')
     Object.values(AgencyMemberFunction).forEach(func => {
       console.log(`  - ${func}`)
@@ -212,8 +190,7 @@ async function main() {
   try {
     await createAdminUser({
       email,
-      firstName,
-      lastName,
+      name,
       agencyFunction: agencyFunction || AgencyMemberFunction.CREATIVE_DIRECTOR
     })
   } catch (error) {
