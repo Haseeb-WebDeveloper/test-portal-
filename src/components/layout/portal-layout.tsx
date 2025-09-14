@@ -18,6 +18,7 @@ import { MenuIcon, Search, LogOut } from "lucide-react";
 import { createClient as createBrowserSupabaseClient } from "@/utils/supabase/clients";
 import { UserRole } from "@/types/enums";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import InitUser from "@/store/InitUser";
 
 interface PortalLayoutProps {
   children: React.ReactNode;
@@ -208,6 +209,7 @@ export function PortalLayout({ children, user }: PortalLayoutProps) {
           </main>
         </div>
       </div>
+      <InitUser />
     </div>
   );
 }

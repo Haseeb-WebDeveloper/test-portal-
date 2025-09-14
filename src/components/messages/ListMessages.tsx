@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ArrowDown } from "lucide-react";
 import LoadMoreMessages from "./LoadMoreMessages";
 import { useMessage } from "@/store/messages";
-import { IMessage, IMessageType } from "@/types/messages";
+import { IMessage } from "@/types/messages";
 import { LIMIT_MESSAGE } from "@/constants/value";
 import { supabaseBrowser } from "@/utils/supabase/browser";
 import Message from "./Message";
@@ -36,13 +36,14 @@ export default function ListMessages() {
         .from("messages")
         .select("*,user:users(*)")
         .eq("roomId", currentRoom.id)
+        .eq("isDeleted", false)
         .range(0, LIMIT_MESSAGE)
         .order("createdAt", { ascending: false });
 
       if (error) {
         console.error("Error loading messages:", error);
       } else {
-        setMesssages(data?.reverse() || [] as unknown as IMessage[]);
+        setMesssages((data?.reverse() || []) as unknown as IMessage[]);
       }
     };
 
@@ -64,19 +65,22 @@ export default function ListMessages() {
         },
         async (payload) => {
           if (!optimisticIds.includes(payload.new.id)) {
-            const { error, data } = await supabase
-              .from("users")
-              .select("*")
-              .eq("id", payload.new.userId)
-              .single();
-            if (error) {
-              toast.error(error.message);
-            } else {
-              const newMessage = {
-                ...payload.new,
-                user: data,
-              };
-              addMessage(newMessage as unknown as IMessage);
+            // Only add message if it's not deleted
+            if (!payload.new.isDeleted) {
+              const { error, data } = await supabase
+                .from("users")
+                .select("*")
+                .eq("id", payload.new.userId)
+                .single();
+              if (error) {
+                toast.error(error.message);
+              } else {
+                const newMessage = {
+                  ...payload.new,
+                  user: data,
+                };
+                addMessage(newMessage as unknown as IMessage);
+              }
             }
           }
           const scrollContainer = scrollRef.current;
@@ -110,12 +114,16 @@ export default function ListMessages() {
           filter: `roomId=eq.${currentRoom.id}`,
         },
         (payload) => {
-          optimisticUpdateMessage(payload.new as unknown as IMessage);
+          // If message is marked as deleted, remove it from UI
+          if (payload.new.isDeleted) {
+            optimisticDeleteMessage(payload.new.id);
+          } else {
+            // Otherwise, update the message normally
+            optimisticUpdateMessage(payload.new as unknown as IMessage);
+          }
         }
       )
       .subscribe();
-
-	  console.log("channel", channel);
 
     return () => {
       channel.unsubscribe();
@@ -154,7 +162,7 @@ export default function ListMessages() {
   return (
     <>
       <div
-        className="flex-1 flex flex-col p-5 h-full overflow-y-auto"
+        className="flex-1 flex flex-col p-5 overflow-y-auto min-h-0"
         ref={scrollRef}
         onScroll={handleOnScroll}
       >
@@ -163,7 +171,7 @@ export default function ListMessages() {
         </div>
         <div className=" space-y-7">
           {messages.map((value, index) => {
-            return <Message key={index} message={value as unknown as IMessage} />;
+            return <Message key={index} message={value} />;
           })}
         </div>
 

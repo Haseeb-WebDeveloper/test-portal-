@@ -16,6 +16,7 @@ interface MessageState {
 	optimisticUpdateMessage: (message: IMessage) => void;
 	setOptimisticIds: (id: string) => void;
 	setMesssages: (messages: IMessage[]) => void;
+	loadMoreMessages: (messages: IMessage[]) => void;
 	setCurrentRoom: (room: Room | null) => void;
 	clearMessages: () => void;
 }
@@ -28,6 +29,12 @@ export const useMessage = create<MessageState>()((set) => ({
 	actionMessage: undefined,
 	currentRoom: null,
 	setMesssages: (messages) =>
+		set(() => ({
+			messages,
+			page: 1,
+			hasMore: messages.length >= LIMIT_MESSAGE,
+		})),
+	loadMoreMessages: (messages) =>
 		set((state) => ({
 			messages: [...messages, ...state.messages],
 			page: state.page + 1,

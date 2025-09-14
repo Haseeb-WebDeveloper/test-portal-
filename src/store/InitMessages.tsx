@@ -19,7 +19,8 @@ export default function InitMessages({
 			useMessage.setState({ 
 				messages, 
 				hasMore,
-				currentRoom: room || null
+				currentRoom: room || null,
+				page: 1
 			});
 		}
 		initState.current = true;

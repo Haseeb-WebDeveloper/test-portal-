@@ -1,7 +1,6 @@
 "use client";
 import React, { Suspense } from "react";
 import ListMessages from "./ListMessages";
-import InitMessages from "@/store/InitMessages";
 import { useMessage } from "@/store/messages";
 import ChatAbout from "./ChatAbout";
 
@@ -14,9 +13,10 @@ export default function ChatMessages() {
   }
 
   return (
-    <Suspense fallback={"loading.."}>
-      <ListMessages />
-      <InitMessages messages={[]} room={currentRoom} />
-    </Suspense>
+    <div className="flex-1 flex flex-col min-h-0">
+      <Suspense fallback={"loading.."}>
+        <ListMessages />
+      </Suspense>
+    </div>
   );
 }

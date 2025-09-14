@@ -9,7 +9,7 @@ import { IMessage } from "@/types/messages";
 
 export default function LoadMoreMessages() {
 	const page = useMessage((state) => state.page);
-	const setMesssages = useMessage((state) => state.setMesssages);
+	const loadMoreMessages = useMessage((state) => state.loadMoreMessages);
 	const hasMore = useMessage((state) => state.hasMore);
 	const currentRoom = useMessage((state) => state.currentRoom);
 
@@ -24,13 +24,14 @@ export default function LoadMoreMessages() {
 			.from("messages")
 			.select("*,user:users(*)")
 			.eq("roomId", currentRoom.id)
+			.eq("isDeleted", false)
 			.range(from, to)
 			.order("createdAt", { ascending: false });
 
 		if (error) {
 			toast.error(error.message);
 		} else {
-			setMesssages(data.reverse() as unknown as IMessage[]);
+			loadMoreMessages(data.reverse() as unknown as IMessage[]);
 		}
 	};
 

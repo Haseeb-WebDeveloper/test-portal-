@@ -3,28 +3,26 @@ import ChatHeader from "@/components/messages/ChatHeader";
 import ChatInput from "@/components/messages/ChatInput";
 import ChatMessages from "@/components/messages/ChatMessages";
 import RoomSidebar from "@/components/messages/RoomSidebar";
-import InitUser from "@/store/InitUser";
 import React from "react";
 
 export default async function Page() {
   return (
-    <>
-      <div className="h-screen flex bg-gray-950">
-        {/* Room Sidebar - Hidden on mobile, shown on desktop */}
-        <div className="hidden lg:block">
-          <RoomSidebar />
+    <div className="h-[calc(100vh-75px)] bg-[#0F0A1D] flex overflow-hidden">
+      {/* Room Sidebar - Hidden on mobile, shown on desktop */}
+      <div className="hidden lg:block h-full">
+        <RoomSidebar />
+      </div>
+      
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col h-full min-h-0">
+        <ChatHeader />
+        <div className="flex-1 flex flex-col min-h-0">
+          <ChatMessages />
         </div>
-        
-        {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
-          <ChatHeader />
-          <div className="flex-1 flex flex-col relative">
-            <ChatMessages />
-            <ChatInput />
-          </div>
+        <div className="flex-shrink-0">
+          <ChatInput />
         </div>
       </div>
-      <InitUser />
-    </>
+    </div>
   );
 }

@@ -5,12 +5,7 @@ import { useUser } from "@/store/user";
 import { Room, RoomSummary } from "@/types/messages";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Users, 
-  MessageSquare, 
-  MoreHorizontal,
-  Plus
-} from "lucide-react";
+import { Users, MessageSquare, MoreHorizontal, Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabaseBrowser } from "@/utils/supabase/browser";
+import Image from "next/image";
 
 export default function RoomSidebar() {
   const [rooms, setRooms] = useState<RoomSummary[]>([]);
@@ -34,11 +30,12 @@ export default function RoomSidebar() {
 
       try {
         setLoading(true);
-        
+
         // Get rooms where user is a participant
         const { data, error } = await supabase
           .from("room_participants")
-          .select(`
+          .select(
+            `
             room:rooms(
               id,
               name,
@@ -48,7 +45,8 @@ export default function RoomSidebar() {
               lastMessageAt,
               createdAt
             )
-          `)
+          `
+          )
           .eq("userId", user.id)
           .eq("isActive", true);
 
@@ -63,7 +61,9 @@ export default function RoomSidebar() {
           name: item.room.name,
           type: item.room.type,
           avatar: item.room.avatar,
-          lastMessageAt: item.room.lastMessageAt ? new Date(item.room.lastMessageAt) : undefined,
+          lastMessageAt: item.room.lastMessageAt
+            ? new Date(item.room.lastMessageAt)
+            : undefined,
           unreadCount: 0, // TODO: Calculate unread count
           participantCount: 0, // TODO: Calculate participant count
         }));
@@ -95,18 +95,20 @@ export default function RoomSidebar() {
 
     setCurrentRoom(fullRoom);
     clearMessages(); // Clear messages when switching rooms
-    
+
     // Close mobile sidebar if open
     if (window.innerWidth < 1024) {
       // Trigger a custom event to close mobile sidebar
-      window.dispatchEvent(new CustomEvent('closeMobileSidebar'));
+      window.dispatchEvent(new CustomEvent("closeMobileSidebar"));
     }
   };
 
   const formatTime = (date: Date) => {
     const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
+    const diffInMinutes = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60)
+    );
+
     if (diffInMinutes < 1) return "now";
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
@@ -128,11 +130,11 @@ export default function RoomSidebar() {
 
   if (loading) {
     return (
-      <div className="w-80 bg-gray-900 border-r border-gray-700 flex flex-col">
-        <div className="p-6 border-b border-gray-700">
-          <h2 className="text-xl font-bold text-white">Messaging</h2>
+      <div className="w-80 h-full border-r flex flex-col">
+        <div className="p-5 h-24 border-b border-foreground/10">
+          <h2 className="figma-h3 ">Messaging</h2>
         </div>
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-4 overflow-y-auto border-foreground/10">
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
@@ -152,18 +154,20 @@ export default function RoomSidebar() {
   }
 
   return (
-    <div className="w-80 bg-gray-900 border-r border-gray-700 flex flex-col">
+    <div className="w-92 h-full bg-[#0F0A1D] border-r flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-gray-700">
+      <div className="p-6 border-b">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">Messaging</h2>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-gray-400 hover:text-white"
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
+          <h2 className="figma-h3 ">Messaging</h2>
+          <button className="cursor-pointer w-10 h-10 grid place-items-center border border-primary/20 rounded-full">
+            <Image
+              src="/icons/add.svg"
+              alt="plus"
+              width={550}
+              height={550}
+              className="w-5 h-5"
+            />
+          </button>
         </div>
       </div>
 
@@ -173,7 +177,7 @@ export default function RoomSidebar() {
           {rooms.length === 0 ? (
             <div className="text-center py-8">
               <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400">No rooms available</p>
+              <p className="">No rooms available</p>
               <p className="text-sm text-gray-500 mt-2">
                 Contact an administrator to get access to rooms
               </p>
@@ -185,8 +189,8 @@ export default function RoomSidebar() {
                 onClick={() => handleRoomSelect(room)}
                 className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
                   currentRoom?.id === room.id
-                    ? "bg-purple-600 text-white"
-                    : "hover:bg-gray-800 text-gray-300"
+                    ? "bg-primary/20"
+                    : "bg-foreground/10"
                 }`}
               >
                 {/* Room Avatar/Icon */}
@@ -209,15 +213,16 @@ export default function RoomSidebar() {
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium truncate">{room.name}</h3>
                     {room.lastMessageAt && (
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs ">
                         {formatTime(room.lastMessageAt)}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center justify-between mt-1">
-                    <p className="text-sm text-gray-400 truncate">
+                    <p className="text-sm  truncate">
                       {room.type === "GENERAL" && "General Discussion"}
-                      {room.type === "CONTRACT_SPECIFIC" && "Contract Discussion"}
+                      {room.type === "CONTRACT_SPECIFIC" &&
+                        "Contract Discussion"}
                       {room.type === "CLIENT_SPECIFIC" && "Proposal Discussion"}
                       {room.type === "AGENCY_INTERNAL" && "Internal Team"}
                     </p>
@@ -235,7 +240,7 @@ export default function RoomSidebar() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-gray-400 hover:text-white p-1"
+                      className=" hover: p-1"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <MoreHorizontal className="w-4 h-4" />

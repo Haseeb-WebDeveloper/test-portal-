@@ -29,42 +29,42 @@ export default function ChatHeader() {
 
   return (
     <>
-      <div className="h-20">
+      <div className="h-24">
         <div className="p-5 border-b flex items-center justify-between h-full">
           <div className="flex items-center gap-3">
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="sm"
-              className="lg:hidden text-gray-400 hover:text-white"
+              className="lg:hidden "
               onClick={() => setShowMobileSidebar(true)}
             >
               <Menu className="w-5 h-5" />
             </Button>
 
             <div>
-              <h1 className="text-xl font-bold">
+              <h1 className="figma-paragraph">
                 {currentRoom ? currentRoom.name : "Messages"}
               </h1>
               {currentRoom && (
-                <p className="text-sm text-gray-500">
+                <p className="figma-paragraph text-foreground/50">
                   {currentRoom.description || "General discussion"}
                 </p>
               )}
-              <ChatPresence />
             </div>
           </div>
           <div className="flex items-center gap-3">
+		  <ChatPresence />
+
             {user && (
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold">
                   {user.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="hidden sm:block">
-                  <p className="text-sm font-medium">{user.name}</p>
-                  <p className="text-xs text-gray-500 capitalize">
-                    {user.role.toLowerCase().replace("_", " ")}
-                  </p>
+                  <p className="figma-paragraph font-medium">{user.name}</p>
+				  <p>{user.role}</p>
+                 
                 </div>
               </div>
             )}

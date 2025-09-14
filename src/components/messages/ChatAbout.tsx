@@ -3,7 +3,7 @@ import { MessageSquare, Users, FileText } from "lucide-react";
 
 export default function ChatAbout() {
 	return (
-		<div className="flex-1 flex items-center justify-center bg-gray-900">
+		<div className="flex-1 flex items-center justify-center bg-gray-900 min-h-0">
 			<div className="text-center space-y-8 max-w-md">
 				<div className="space-y-4">
 					<div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto">

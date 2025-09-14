@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useRef } from "react";
-import { Message as IMessage } from "@/types/messages";
+import { IMessage } from "@/types/messages";
 
 export function DeleteAlert() {
 	const actionMessage = useMessage((state) => state.actionMessage);
@@ -34,17 +34,27 @@ export function DeleteAlert() {
 	);
 	const handleDeleteMessage = async () => {
 		const supabase = supabaseBrowser();
+		
+		// Optimistic update first
 		optimisticDeleteMessage(actionMessage?.id!);
 
-		const { error } = await supabase
-			.from("messages")
-			.update({ isDeleted: true })
-			.eq("id", actionMessage?.id!);
+		try {
+			const { data, error } = await supabase
+				.from("messages")
+				.update({ 
+					isDeleted: true,
+					updatedAt: new Date().toISOString()
+				})
+				.eq("id", actionMessage?.id!)
+				.select();
 
-		if (error) {
-			toast.error(error.message);
-		} else {
-			toast.success("Successfully delete a message");
+			if (error) {
+				toast.error(`Delete failed: ${error.message}`);
+			} else {
+				toast.success("Message deleted successfully");
+			}
+		} catch (err) {
+			toast.error("An unexpected error occurred");
 		}
 	};
 
@@ -86,21 +96,35 @@ export function EditAlert() {
 	const handleEdit = async () => {
 		const supabase = supabaseBrowser();
 		const text = inputRef.current?.value.trim();
+		
 		if (text) {
+			// Optimistic update first
 			optimisticUpdateMessage({
 				...actionMessage,
 				content: text,
 				isEdited: true,
 			} as IMessage);
-			const { error } = await supabase
-				.from("messages")
-				.update({ content: text, isEdited: true })
-				.eq("id", actionMessage?.id!);
-			if (error) {
-				toast.error(error.message);
-			} else {
-				toast.success("Update Successfully");
+
+			try {
+				const { data, error } = await supabase
+					.from("messages")
+					.update({ 
+						content: text, 
+						isEdited: true,
+						updatedAt: new Date().toISOString()
+					})
+					.eq("id", actionMessage?.id!)
+					.select();
+
+				if (error) {
+					toast.error(`Edit failed: ${error.message}`);
+				} else {
+					toast.success("Message updated successfully");
+				}
+			} catch (err) {
+				toast.error("An unexpected error occurred");
 			}
+			
 			document.getElementById("trigger-edit")?.click();
 		} else {
 			document.getElementById("trigger-edit")?.click();
