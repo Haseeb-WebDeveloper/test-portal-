@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { UserRole } from "@/types/enums";
 
 export async function GET(request: NextRequest) {
   try {
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
     await requireAdmin();
 
     const body = await request.json();
-    const { name, description, website, avatar, email } =
+    const { name, description, website, avatar, email, members } =
       body;
 
     // Validate required fields
@@ -95,6 +96,25 @@ export async function POST(request: NextRequest) {
         { message: "Invalid email format" },
         { status: 400 }
       );
+    }
+
+    // Validate members if provided
+    if (members && Array.isArray(members)) {
+      for (const member of members) {
+        if (!member.firstName || !member.lastName || !member.email) {
+          return NextResponse.json(
+            { message: "All member fields are required" },
+            { status: 400 }
+          );
+        }
+        
+        if (!emailRegex.test(member.email)) {
+          return NextResponse.json(
+            { message: "Invalid member email format" },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     // Create user in Supabase Auth first using admin client
@@ -174,7 +194,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Create client membership
+      // Create client membership for primary contact
       await tx.clientMembership.create({
         data: {
           userId: user.id,
@@ -228,6 +248,58 @@ export async function POST(request: NextRequest) {
             createdBy: user.id,
           })),
         });
+      }
+
+      // Process additional client members if provided
+      if (members && Array.isArray(members) && members.length > 0) {
+        for (const member of members) {
+          // Create user in Supabase Auth for the member
+          const { data: memberAuthData, error: memberAuthError } =
+            await supabaseAdmin.auth.admin.createUser({
+              email: member.email,
+              email_confirm: true, // Auto-confirm the email
+              user_metadata: {
+                role: "CLIENT_MEMBER",
+              },
+            });
+
+          if (memberAuthError || !memberAuthData.user) {
+            console.error("Failed to create member in Supabase Auth:", memberAuthError);
+            // Continue with other members even if one fails
+            continue;
+          }
+
+          // Create user in database with real authId
+          const memberUser = await tx.user.create({
+            data: {
+              authId: memberAuthData.user.id,
+              email: member.email,
+              name: `${member.firstName} ${member.lastName}`,
+              role: UserRole.CLIENT_MEMBER,
+              isActive: true,
+            },
+          });
+
+          // Create client membership for the member
+          await tx.clientMembership.create({
+            data: {
+              userId: memberUser.id,
+              clientId: client.id,
+              role: member.role || 'member',
+            },
+          });
+
+          // Add the member to the client room with WRITE permission
+          await tx.roomParticipant.create({
+            data: {
+              roomId: room.id,
+              userId: memberUser.id,
+              permission: 'WRITE',
+              isActive: true,
+              createdBy: user.id,
+            },
+          });
+        }
       }
 
       return { client, user, room };

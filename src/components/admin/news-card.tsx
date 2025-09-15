@@ -77,7 +77,7 @@ export function NewsCard({ news, onEdit, onDelete }: NewsCardProps) {
         <div className="absolute -top-[26px] right-0 z-10">
           <div
             className={`flex items-center gap-2 px-3 py-1 rounded-t-lg text-xs font-medium border border-b-0 bg-green-500 shadow-sm`}
-            style={{ background: '#18102B' }}
+            style={{ background: 'var(--primary)' }}
           >
             <div className={`w-2 h-2 rounded-full bg-green-500`}></div>
             <span>Active</span>

@@ -215,7 +215,7 @@ export default function RoomSidebar() {
   }
 
   return (
-    <div className="w-92 h-full bg-[#0F0A1D] border-r flex flex-col">
+    <div className="w-92 h-full border-r flex flex-col">
       {/* Header */}
       <div className="p-6 border-b">
         <div className="flex items-center justify-between">

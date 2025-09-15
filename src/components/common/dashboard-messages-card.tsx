@@ -24,7 +24,7 @@ export default function DashboardMessagesCard({
   let badge = null;
   if (typeof totalUnseen === "number" && totalUnseen > 0) {
     badge = (
-      <span className="ml-3 px-3 py-0.5 rounded-full text-xs  bg-[#FF5A5F]  shadow text-center min-w-[56px]">
+      <span className="ml-3 px-3 py-0.5 rounded-full text-xs bg-figma-alert shadow text-center min-w-[56px]">
         {totalUnseen > 3 ? `${totalUnseen}+ unseen` : `${totalUnseen} unseen`}
       </span>
     );

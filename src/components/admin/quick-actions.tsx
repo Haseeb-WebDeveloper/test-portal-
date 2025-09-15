@@ -15,12 +15,12 @@ export function QuickActions() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button className="bg-gradient-to-r from-[#6B42D1] to-[#FF2AFF] hover:opacity-90">
+        <Button className="bg-figma-active-sidebar-gradient hover:opacity-90">
           <Plus className="w-4 h-4 mr-2" />
           Quick Actions
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-64 mr-12 bg-[#1A0F2E] border-primary/20 text-foreground">
+      <DropdownMenuContent className="w-64 mr-12 bg-card border-primary/20 text-foreground">
         {/* <DropdownMenuItem className="hover:bg-secondary focus:bg-secondary focus:text-accent-foreground cursor-pointer">
           <Link
             href="/admin/members/new"

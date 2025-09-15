@@ -58,7 +58,7 @@ export default async function ContractsPage() {
         <h1 className="figma-h3">Contract</h1>
         <Link
           href="/admin/contracts/create"
-          className="w-full md:w-fit cursor-pointer px-6 py-2 bg-gradient-to-r from-[#6B42D1] to-[#FF2AFF] rounded-lg transition-all"
+          className="w-full md:w-fit cursor-pointer px-6 py-2 bg-figma-active-sidebar-gradient rounded-lg transition-all"
         >
           Create Contract
         </Link>

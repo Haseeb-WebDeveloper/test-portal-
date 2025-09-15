@@ -72,7 +72,7 @@ export default async function NewsPage() {
         <h1 className="figma-h3">Client News posts</h1>
         <Link
           href="/admin/news/create"
-          className="w-full md:w-fit cursor-pointer bg-gradient-to-r from-[#6B42D1] to-[#FF2AFF] px-6 py-2 rounded-lg transition-all"
+          className="w-full md:w-fit cursor-pointer bg-figma-active-sidebar-gradient px-6 py-2 rounded-lg transition-all"
         >
           Create News
         </Link>

@@ -11,7 +11,7 @@ export const revalidate = 60;
 
 export default async function Page() {
   return (
-    <div className="h-[calc(100vh-75px)] bg-[#0F0A1D] flex overflow-hidden">
+    <div className="h-[calc(100vh-75px)]  flex overflow-hidden">
       {/* Initialize current room from query param on client */}
       <InitMessages messages={[]} />
       {/* Room Sidebar - Hidden on mobile, shown on desktop */}
