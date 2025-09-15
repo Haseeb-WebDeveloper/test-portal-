@@ -34,8 +34,6 @@ export interface DashboardData {
 }
 
 export async function getDashboardData(userId: string): Promise<DashboardData> {
-  console.log('🚀 Starting dashboard data fetch for user:', userId);
-  
   // Execute all queries in parallel for optimal performance
   const [
     contractsGrouped,
@@ -181,14 +179,6 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     })
   ]);
 
-  console.log('📊 Raw data fetched:');
-  console.log('- Contracts grouped:', contractsGrouped);
-  console.log('- Proposals grouped:', proposalsGrouped);
-  console.log('- Clients count:', clientsData.length);
-  console.log('- News count:', newsData.length);
-  console.log('- User rooms count:', userRooms.length);
-  console.log('- Unread messages count:', unreadMessagesCount);
-
   // Process contracts data
   const contractsByStatus = contractsGrouped.reduce((acc, item) => {
     acc[item.status] = item._count.status;
@@ -210,10 +200,6 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     new: (proposalsByStatus[ProposalStatus.SENT] || 0) + (proposalsByStatus[ProposalStatus.SEEN] || 0),
     pending: proposalsByStatus[ProposalStatus.DRAFT] || 0
   };
-
-  console.log('📈 Processed data:');
-  console.log('- Contracts:', contracts);
-  console.log('- Proposals:', proposals);
 
   // Process clients data
   const clients = clientsData.map(client => {
@@ -257,8 +243,6 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
       
       // Calculate actual unread count for this room
       const unreadCount = await getRoomUnreadCount(userId, room.id);
-      
-      console.log(`🏠 Room ${room.name}: unreadCount = ${unreadCount}, lastMessage = ${lastMessage ? 'exists' : 'none'}`);
 
       return {
         id: room.id,
@@ -282,15 +266,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
       .slice(0, 3);
   }
 
-  console.log('📨 Rooms with unread messages:', roomsWithUnread);
-
   const unreadMessages = unreadMessagesCount || 0;
-
-  console.log('🎯 Final dashboard data:');
-  console.log('- Clients:', clients.length, 'items');
-  console.log('- News:', news.length, 'items');
-  console.log('- Unread messages:', unreadMessages);
-  console.log('- Recent rooms with unread:', roomsWithUnread.length, 'items');
 
   const result = {
     contracts,
@@ -301,7 +277,6 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     recentRooms: roomsWithUnread
   };
 
-  console.log('✅ Dashboard data fetch completed successfully');
   return result;
 }
 

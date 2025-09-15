@@ -34,8 +34,6 @@ export interface ClientDashboardData {
 }
 
 export async function getClientDashboardData(userId: string): Promise<ClientDashboardData> {
-  console.log('🚀 Starting client dashboard data fetch for user:', userId);
-  
   // Get user with their client memberships (same pattern as other client API routes)
   const userRecord = await prisma.user.findUnique({
     where: { id: userId },
@@ -53,7 +51,6 @@ export async function getClientDashboardData(userId: string): Promise<ClientDash
   });
 
   if (!userRecord) {
-    console.log('❌ User not found');
     return {
       unreadMessages: 0,
       contracts: { active: 0 },
@@ -65,31 +62,21 @@ export async function getClientDashboardData(userId: string): Promise<ClientDash
   }
 
   const clientIds = userRecord.clientMemberships.map(membership => membership.clientId);
-  console.log('👥 User belongs to clients:', clientIds);
-  console.log('👤 User role:', userRecord.role);
 
   // Debug: Check if there's any data in the database at all
-  const [totalContracts, totalProposals, totalNews, totalRooms] = await Promise.all([
+  await Promise.all([
     prisma.contract.count({ where: { deletedAt: null } }),
     prisma.proposal.count({ where: { deletedAt: null } }),
     prisma.news.count({ where: { deletedAt: null } }),
     prisma.room.count({ where: { deletedAt: null } })
   ]);
 
-  console.log('🔍 Database totals:');
-  console.log('- Total contracts:', totalContracts);
-  console.log('- Total proposals:', totalProposals);
-  console.log('- Total news:', totalNews);
-  console.log('- Total rooms:', totalRooms);
-
   // For CLIENT role users, if they have no memberships, show all data
   // For CLIENT_MEMBER role users, they need explicit memberships
   if (clientIds.length === 0) {
     if (userRecord.role === 'CLIENT') {
-      console.log('⚠️ CLIENT user has no memberships, showing all data');
       // We'll use empty array to show all data
     } else {
-      console.log('⚠️ CLIENT_MEMBER user has no client memberships');
       return {
         unreadMessages: 0,
         contracts: { active: 0 },
@@ -239,19 +226,8 @@ export async function getClientDashboardData(userId: string): Promise<ClientDash
     })
   ]);
 
-  console.log('📊 Raw data fetched:');
-  console.log('- Contracts grouped:', contractsGrouped);
-  console.log('- Proposals grouped:', proposalsGrouped);
-  console.log('- News count:', newsData.length);
-  console.log('- News data:', newsData);
-  console.log('- Ongoing contracts count:', ongoingContractsData.length);
-  console.log('- Ongoing contracts data:', ongoingContractsData);
-  console.log('- User rooms count:', userRooms.length);
-  console.log('- User rooms data:', userRooms);
-  console.log('- Unread messages count:', unreadMessagesCount);
-  
   // Debug: Let's also check what contracts and proposals exist
-  const [allContracts, allProposals] = await Promise.all([
+  await Promise.all([
     prisma.contract.findMany({
       where: { deletedAt: null },
       select: { id: true, title: true, status: true, clientId: true }
@@ -261,9 +237,6 @@ export async function getClientDashboardData(userId: string): Promise<ClientDash
       select: { id: true, title: true, status: true, clientId: true }
     })
   ]);
-  
-  console.log('🔍 All contracts in database:', allContracts);
-  console.log('🔍 All proposals in database:', allProposals);
 
   // Process contracts data
   const contractsByStatus = contractsGrouped.reduce((acc, item) => {
@@ -317,8 +290,6 @@ export async function getClientDashboardData(userId: string): Promise<ClientDash
       
       // Calculate actual unread count for this room
       const unreadCount = await getRoomUnreadCount(userId, room.id);
-      
-      console.log(`🏠 Room ${room.name}: unreadCount = ${unreadCount}, lastMessage = ${lastMessage ? 'exists' : 'none'}`);
 
       return {
         id: room.id,
@@ -342,17 +313,7 @@ export async function getClientDashboardData(userId: string): Promise<ClientDash
       .slice(0, 3);
   }
 
-  console.log('📨 Rooms with unread messages:', roomsWithUnread);
-
   const unreadMessages = unreadMessagesCount || 0;
-
-  console.log('🎯 Final client dashboard data:');
-  console.log('- Contracts:', contracts);
-  console.log('- Proposals:', proposals);
-  console.log('- News:', news.length, 'items');
-  console.log('- Ongoing contracts:', ongoingContracts.length, 'items');
-  console.log('- Unread messages:', unreadMessages);
-  console.log('- Recent rooms with unread:', roomsWithUnread.length, 'items');
 
   const result = {
     unreadMessages,
