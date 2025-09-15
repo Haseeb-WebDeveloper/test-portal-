@@ -99,8 +99,8 @@ const statusInfoMap: Record<
 const progressBarGradient =
   'bg-gradient-to-r from-primary to-[#A084E8]';
 
-export function ContractsList({}: ContractsListProps) {
-  const [contracts, setContracts] = useState<Contract[]>([]);
+export function ContractsList({ initialContracts = [] as Contract[] }: { initialContracts?: Contract[] }) {
+  const [contracts, setContracts] = useState<Contract[]>(initialContracts);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -163,6 +163,11 @@ export function ContractsList({}: ContractsListProps) {
   };
 
   useEffect(() => {
+    if (initialContracts && initialContracts.length > 0) {
+      // We already have data from server; mark as loaded
+      setIsLoading(false);
+      return;
+    }
     fetchContracts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
