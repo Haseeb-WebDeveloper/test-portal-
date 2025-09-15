@@ -62,19 +62,6 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="figma-h3">
-            {getGreeting(
-              user?.name ? user.name.split(" ").slice(0, 2).join(" ") : ""
-            )}
-          </h1>
-          <p className="figma-paragraph">Here's your latest updates!</p>
-        </div>
-        <QuickActions />
-      </div>
-
       {/* main content  */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* left contnet */}

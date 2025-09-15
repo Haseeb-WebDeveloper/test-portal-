@@ -4,6 +4,9 @@ import { getDashboardData } from "@/lib/dashboard";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { prisma } from "@/lib/prisma";
 import { DashboardClient } from "./dashboard-client";
+import { getGreeting } from "@/utils/greeting";
+import { QuickActions } from "@/components/admin/quick-actions";
+import { useUser } from "@/store/user";
 
 // ISR: Revalidate every 60 seconds
 export const revalidate = 60;
@@ -52,6 +55,7 @@ async function getDashboardDataServer() {
 }
 
 export default async function AdminPage() {
+  const { user } = useUser();
   try {
     const dashboardData = await getDashboardDataServer();
 
@@ -64,6 +68,19 @@ export default async function AdminPage() {
             </div>
           }
         >
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="figma-h3">
+                {getGreeting(
+                  user?.name ? user.name.split(" ").slice(0, 2).join(" ") : ""
+                )}
+              </h1>
+              <p className="figma-paragraph">Here's your latest updates!</p>
+            </div>
+            <QuickActions />
+          </div>
+
           <DashboardClient initialData={dashboardData} />
         </Suspense>
       </div>
