@@ -52,8 +52,6 @@ export default function FilePreview({ attachment, className = "" }: FilePreviewP
   const isVideo = attachment.mimeType.startsWith("video/");
   const isPdf = attachment.mimeType === "application/pdf";
 
-  console.log("attachment", attachment);
-
   return (
     <>
       <div className={`${className}`}>

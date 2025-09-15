@@ -3,6 +3,74 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/utils/supabase/admin";
 
+export async function GET(request: NextRequest) {
+  try {
+    // Require admin authentication
+    await requireAdmin();
+
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const search = searchParams.get('search') || '';
+
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const where: any = {
+      deletedAt: null
+    };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    // Get clients with pagination
+    const [clients, total] = await Promise.all([
+      prisma.client.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          website: true,
+          avatar: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      }),
+      prisma.client.count({ where })
+    ]);
+
+    const pages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      clients,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages,
+        hasNext: page < pages,
+        hasPrev: page > 1
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching clients:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Require admin authentication

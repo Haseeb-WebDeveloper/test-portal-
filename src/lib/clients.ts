@@ -18,6 +18,15 @@ export interface ClientWithDetails {
     id: string;
     name: string;
     avatar: string | null;
+    email?: string;
+    role?: string;
+  }[];
+  rooms?: {
+    id: string;
+    name: string;
+    description: string | null;
+    type: string;
+    lastMessageAt: Date | null;
   }[];
 }
 

@@ -58,6 +58,14 @@ export const adminSidebarItems: NavigationItem[] = [
     roles: [UserRole.PLATFORM_ADMIN, UserRole.AGENCY_MEMBER, UserRole.CLIENT, UserRole.CLIENT_MEMBER],
     description: "Communication hub"
   },
+  {
+    id: "profile",
+    label: "Profile",
+    icon: "members.svg",
+    href: "/admin/profile",
+    roles: [UserRole.PLATFORM_ADMIN, UserRole.AGENCY_MEMBER, UserRole.CLIENT, UserRole.CLIENT_MEMBER],
+    description: "Profile"
+  },
 ];
 
 export const clientSidebarItems: NavigationItem[] = [
@@ -100,6 +108,14 @@ export const clientSidebarItems: NavigationItem[] = [
     href: "/messages",
     roles: [UserRole.PLATFORM_ADMIN, UserRole.AGENCY_MEMBER, UserRole.CLIENT, UserRole.CLIENT_MEMBER],
     description: "Communication hub"
+  },
+  {
+    id: "profile",
+    label: "Profile",
+    icon: "members.svg",
+    href: "/client/profile",
+    roles: [UserRole.CLIENT, UserRole.CLIENT_MEMBER],
+    description: "Profile"
   },
 ];
 

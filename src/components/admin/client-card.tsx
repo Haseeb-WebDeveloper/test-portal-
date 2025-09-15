@@ -39,7 +39,7 @@ export const ClientCard = memo(function ClientCard({
   const remainingCount = totalTeamMembers - displayMembers.length;
 
   return (
-    <div className="border border-border rounded-xl p-6 hover:border-primary/40 transition-all duration-200 group relative ">
+    <div className="border border-border rounded-xl p-6 hover:border-primary/20 transition-all duration-200 group relative ">
       {/* New Update Badge */}
       {hasNewUpdate && (
         <div className="absolute -top-2 -right-2 z-10">

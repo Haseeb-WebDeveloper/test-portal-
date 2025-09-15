@@ -4,6 +4,7 @@ import { UserRole } from '@/types/enums';
 interface User {
   id: string;
   name: string;
+  email: string;
   avatar: string | null;
   role: string;
   isActive: boolean;

@@ -19,32 +19,47 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-const frameworks = [
-  {
-    value: "next.js",
-    label: "Next.js",
-  },
-  {
-    value: "sveltekit",
-    label: "SvelteKit",
-  },
-  {
-    value: "nuxt.js",
-    label: "Nuxt.js",
-  },
-  {
-    value: "remix",
-    label: "Remix",
-  },
-  {
-    value: "astro",
-    label: "Astro",
-  },
-]
+interface ComboboxProps<T> {
+  placeholder?: string
+  onSearch?: (search: string) => void
+  onSelect?: (item: T) => void
+  items: T[]
+  isLoading?: boolean
+  renderItem?: (item: T) => React.ReactNode
+  value?: T
+  className?: string
+  disabled?: boolean
+}
 
-export function ComboboxDemo() {
+export function Combobox<T>({
+  placeholder = "Select item...",
+  onSearch,
+  onSelect,
+  items = [],
+  isLoading = false,
+  renderItem,
+  value,
+  className,
+  disabled = false,
+}: ComboboxProps<T>) {
   const [open, setOpen] = React.useState(false)
-  const [value, setValue] = React.useState("")
+  const [searchTerm, setSearchTerm] = React.useState("")
+
+  const handleSearch = (search: string) => {
+    setSearchTerm(search)
+    onSearch?.(search)
+  }
+
+  const handleSelect = (item: T) => {
+    onSelect?.(item)
+    setOpen(false)
+  }
+
+  const defaultRenderItem = (item: T) => (
+    <div className="flex items-center space-x-2">
+      <span>{String(item)}</span>
+    </div>
+  )
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -53,36 +68,44 @@ export function ComboboxDemo() {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between"
+          className={cn("w-full justify-between", className)}
+          disabled={disabled}
         >
-          {value
-            ? frameworks.find((framework) => framework.value === value)?.label
-            : "Select framework..."}
-          <ChevronsUpDown className="opacity-50" />
+          {value ? (
+            renderItem ? renderItem(value) : String(value)
+          ) : (
+            placeholder
+          )}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-full p-0" align="start">
         <Command>
-          <CommandInput placeholder="Search framework..." className="h-9" />
+          <CommandInput
+            placeholder="Search..."
+            value={searchTerm}
+            onValueChange={handleSearch}
+            className="h-9"
+          />
           <CommandList>
-            <CommandEmpty>No framework found.</CommandEmpty>
+            <CommandEmpty>
+              {isLoading ? "Loading..." : "No items found."}
+            </CommandEmpty>
             <CommandGroup>
-              {frameworks.map((framework) => (
+              {items.map((item, index) => (
                 <CommandItem
-                  key={framework.value}
-                  value={framework.value}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue === value ? "" : currentValue)
-                    setOpen(false)
-                  }}
+                  key={index}
+                  value={String(item)}
+                  onSelect={() => handleSelect(item)}
+                  className="flex items-center space-x-2"
                 >
-                  {framework.label}
                   <Check
                     className={cn(
-                      "ml-auto",
-                      value === framework.value ? "opacity-100" : "opacity-0"
+                      "mr-2 h-4 w-4",
+                      value === item ? "opacity-100" : "opacity-0"
                     )}
                   />
+                  {renderItem ? renderItem(item) : String(item)}
                 </CommandItem>
               ))}
             </CommandGroup>

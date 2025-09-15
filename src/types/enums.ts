@@ -33,6 +33,7 @@ export enum ContractStatus {
 export enum ProposalStatus {
   DRAFT = 'DRAFT',
   SENT = 'SENT',
+  SEEN = 'SEEN',
   ACCEPTED = 'ACCEPTED',
   DECLINED = 'DECLINED',
   EXPIRED = 'EXPIRED',

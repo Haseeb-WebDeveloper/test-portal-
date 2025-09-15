@@ -6,6 +6,7 @@ import { UserRole } from '@/types/enums';
 interface User {
   id: string;
   name: string;
+  email: string;
   avatar: string | null;
   role: string;
   isActive: boolean;
@@ -37,6 +38,7 @@ export async function getCurrentUser(): Promise<User> {
       select: {
         id: true,
         name: true,
+        email: true,
         avatar: true,
         role: true,
         isActive: true,
