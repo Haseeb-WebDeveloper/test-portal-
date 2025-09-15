@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, memo } from "react";
+import { useState, useMemo, useCallback, memo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -62,6 +62,19 @@ export function PortalLayout({ children, user }: PortalLayoutProps) {
     },
     [router, isMobile]
   );
+
+  // Prefetch frequent admin routes to reduce transition wait
+  useEffect(() => {
+    const toPrefetch = [
+      "/admin",
+      "/admin/profile",
+      "/admin/clients",
+      "/admin/contracts",
+      "/admin/proposal",
+      "/admin/news",
+    ];
+    toPrefetch.forEach((p) => router.prefetch(p));
+  }, [router]);
 
   const SidebarContent = useMemo(() => {
     const SidebarComponent = memo(() => (
