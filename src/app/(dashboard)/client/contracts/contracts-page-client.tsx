@@ -88,7 +88,7 @@ export function ClientContractsPageClient({ initialContracts }: { initialContrac
   return (
     <>
       {contracts.length === 0 ? (
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="border-gray-700">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2 text-white">No contracts found</h3>

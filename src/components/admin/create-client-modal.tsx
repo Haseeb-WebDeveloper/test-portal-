@@ -343,7 +343,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
           Create new client
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[600px] max-h-[90vh] bg-card border-border flex flex-col p-0 overflow-hidden">
+      <DialogContent className="max-w-[600px] max-h-[90vh] border-border flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-4 border-b border-border">
           <DialogTitle className="figma-h3 text-figma-text-white">
             Create New Client
@@ -559,7 +559,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
                 {members.map((member, idx) => (
                   <div
                     key={idx}
-                    className="bg-input border border-border rounded-lg p-4 space-y-3"
+                    className="border border-border rounded-lg p-4 space-y-3"
                   >
                     <div className="flex items-center justify-between">
                       <span
