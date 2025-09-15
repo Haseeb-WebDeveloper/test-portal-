@@ -64,10 +64,6 @@ export default async function AdminPage() {
             </div>
           }
         >
-          <div>
-            <h1 className="figma-h3">Our Clients</h1>
-            
-          </div>
           <DashboardClient initialData={dashboardData} />
         </Suspense>
       </div>
