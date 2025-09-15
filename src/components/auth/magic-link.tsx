@@ -32,19 +32,16 @@ export function MagicLinkLogin({
 
     try {
       // Pre-check if user exists in our database
-      const checkResponse = await fetch("/api/auth/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const checkJson = await checkResponse.json();
-
-      if (!checkResponse.ok || !checkJson.ok) {
-        throw new Error(checkJson.error || "Unable to verify user");
+      const checkResponse = await fetch(`/api/auth/users?search=${encodeURIComponent(email)}`);
+      
+      if (!checkResponse.ok) {
+        throw new Error("Unable to verify user");
       }
 
-      if (!checkJson.exists) {
+      const users = await checkResponse.json();
+      const userExists = users.some((user: any) => user.email.toLowerCase() === email.toLowerCase());
+
+      if (!userExists) {
         setError(
           "You are not registered on Figmenta client portal. Please contact the administration team for more info."
         );
