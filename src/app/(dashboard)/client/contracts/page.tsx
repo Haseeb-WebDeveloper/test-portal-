@@ -96,7 +96,7 @@ export default function ClientContractsPage() {
       </div>
 
       {/* Filters */}
-      <Card className="bg-gray-800 border-gray-700">
+      {/* <Card className="bg-gray-800 border-gray-700">
         <CardContent className="pt-6">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
@@ -129,7 +129,7 @@ export default function ClientContractsPage() {
             </Select>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Contracts Grid */}
       {contracts.length === 0 ? (

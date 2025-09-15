@@ -146,13 +146,8 @@ export const ClientsList = memo(function ClientsList({
     <div className="space-y-6">
       {/* Header with Sort and Filter - Always visible */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Our Clients</h1>
-          <p className="text-muted-foreground">
-            {totalCount} {totalCount === 1 ? 'client' : 'clients'} total
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+     
+        {/* <div className="flex items-center gap-3">
           <ClientsSortFilter
             sortBy={sortBy}
             sortOrder={sortOrder}
@@ -162,7 +157,7 @@ export const ClientsList = memo(function ClientsList({
             onFiltersClick={onFiltersClick}
           />
           <CreateClientModal onClientCreated={onClientCreated} />
-        </div>
+        </div> */}
       </div>
 
       {/* Content Area */}
@@ -194,7 +189,7 @@ export const ClientsList = memo(function ClientsList({
         </div>
       ) : (
         /* Clients Grid */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex flex-wrap gap-6">
           {clients.map((client, index) => (
             <ClientCard
               key={client.id}

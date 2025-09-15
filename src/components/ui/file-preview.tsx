@@ -1,23 +1,33 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Download, 
-  X, 
-  FileText, 
-  Image, 
-  Video, 
-  Music, 
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Download,
+  FileText,
+  Image,
+  Video,
+  Music,
   Archive,
   File,
-  Eye,
-  Calendar,
-  User
-} from 'lucide-react';
-import { formatFileSize, getFileType } from '@/lib/utils';
+} from "lucide-react";
+
+// Accept both "image" and "image/*" as image types
+function isImageMimeType(mimeType: string) {
+  return mimeType === "image" || mimeType.startsWith("image/");
+}
+function isVideoMimeType(mimeType: string) {
+  return mimeType === "video" || mimeType.startsWith("video/");
+}
+function isAudioMimeType(mimeType: string) {
+  return mimeType === "audio" || mimeType.startsWith("audio/");
+}
 
 interface MediaFile {
   id: string;
@@ -41,26 +51,39 @@ interface FilePreviewProps {
 }
 
 const getFileIcon = (mimeType: string) => {
-  if (mimeType.startsWith('image/')) return Image;
-  if (mimeType.startsWith('video/')) return Video;
-  if (mimeType.startsWith('audio/')) return Music;
-  if (mimeType.includes('pdf') || mimeType.includes('document')) return FileText;
-  if (mimeType.includes('zip') || mimeType.includes('rar')) return Archive;
+  if (isImageMimeType(mimeType)) return Image;
+  if (isVideoMimeType(mimeType)) return Video;
+  if (isAudioMimeType(mimeType)) return Music;
+  if (mimeType.includes("pdf") || mimeType.includes("document"))
+    return FileText;
+  if (mimeType.includes("zip") || mimeType.includes("rar")) return Archive;
   return File;
 };
 
 const getFileTypeColor = (mimeType: string) => {
-  if (mimeType.startsWith('image/')) return 'bg-green-100 text-green-800';
-  if (mimeType.startsWith('video/')) return 'bg-blue-100 text-blue-800';
-  if (mimeType.startsWith('audio/')) return 'bg-purple-100 text-purple-800';
-  if (mimeType.includes('pdf')) return 'bg-red-100 text-red-800';
-  if (mimeType.includes('document')) return 'bg-orange-100 text-orange-800';
-  if (mimeType.includes('zip') || mimeType.includes('rar')) return 'bg-yellow-100 text-yellow-800';
-  return 'bg-gray-100 text-gray-800';
+  if (isImageMimeType(mimeType)) return "bg-green-100 text-green-800";
+  if (isVideoMimeType(mimeType)) return "bg-blue-100 text-blue-800";
+  if (isAudioMimeType(mimeType)) return "bg-purple-100 text-purple-800";
+  if (mimeType.includes("pdf")) return "bg-red-100 text-red-800";
+  if (mimeType.includes("document")) return "bg-orange-100 text-orange-800";
+  if (mimeType.includes("zip") || mimeType.includes("rar"))
+    return "bg-yellow-100 text-yellow-800";
+  return "bg-gray-100 text-gray-800";
 };
 
-export function FilePreview({ files, isOpen, onClose, currentIndex = 0, onIndexChange }: FilePreviewProps) {
+export function FilePreview({
+  files,
+  isOpen,
+  onClose,
+  currentIndex = 0,
+  onIndexChange,
+}: FilePreviewProps) {
   const [activeIndex, setActiveIndex] = useState(currentIndex);
+
+  // Keep activeIndex in sync with currentIndex prop
+  useEffect(() => {
+    setActiveIndex(currentIndex);
+  }, [currentIndex, isOpen]);
 
   const handleIndexChange = (index: number) => {
     setActiveIndex(index);
@@ -68,10 +91,10 @@ export function FilePreview({ files, isOpen, onClose, currentIndex = 0, onIndexC
   };
 
   const handleDownload = (file: MediaFile) => {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = file.filePath;
     link.download = file.fileName;
-    link.target = '_blank';
+    link.target = "_blank";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -99,29 +122,24 @@ export function FilePreview({ files, isOpen, onClose, currentIndex = 0, onIndexC
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <FileIcon className="h-5 w-5" />
-              {currentFile.fileName}
             </DialogTitle>
-            <div className="flex items-center gap-2">
-              <Badge className={getFileTypeColor(currentFile.mimeType)}>
-                {getFileType(currentFile.mimeType)}
-              </Badge>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
         </DialogHeader>
 
         <div className="flex flex-col h-[70vh]">
           {/* File Content */}
-          <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
-            {currentFile.mimeType.startsWith('image/') ? (
+          <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
+            {isImageMimeType(currentFile.mimeType) ? (
               <img
                 src={currentFile.filePath}
                 alt={currentFile.fileName}
                 className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                onError={e => {
+                  (e.target as HTMLImageElement).src =
+                    "https://via.placeholder.com/300x200?text=Image+not+found";
+                }}
               />
-            ) : currentFile.mimeType.startsWith('video/') ? (
+            ) : isVideoMimeType(currentFile.mimeType) ? (
               <video
                 src={currentFile.filePath}
                 controls
@@ -129,17 +147,23 @@ export function FilePreview({ files, isOpen, onClose, currentIndex = 0, onIndexC
               >
                 Your browser does not support the video tag.
               </video>
-            ) : currentFile.mimeType.startsWith('audio/') ? (
+            ) : isAudioMimeType(currentFile.mimeType) ? (
               <div className="text-center">
-                <Music className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                <audio src={currentFile.filePath} controls className="w-full max-w-md">
+                <Music className="h-16 w-16 mx-auto mb-4 " />
+                <audio
+                  src={currentFile.filePath}
+                  controls
+                  className="w-full max-w-md"
+                >
                   Your browser does not support the audio tag.
                 </audio>
               </div>
             ) : (
               <div className="text-center">
-                <FileIcon className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600 mb-4">Preview not available for this file type</p>
+                <FileIcon className="h-16 w-16 mx-auto mb-4 " />
+                <p className=" mb-4">
+                  Preview not available for this file type
+                </p>
                 <Button onClick={() => handleDownload(currentFile)}>
                   <Download className="mr-2 h-4 w-4" />
                   Download to View
@@ -149,8 +173,8 @@ export function FilePreview({ files, isOpen, onClose, currentIndex = 0, onIndexC
           </div>
 
           {/* Navigation and Controls */}
-          <div className="p-6 border-t bg-white">
-            <div className="flex items-center justify-between mb-4">
+          <div className="p-6 border-t">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Button
                   variant="outline"
@@ -160,7 +184,7 @@ export function FilePreview({ files, isOpen, onClose, currentIndex = 0, onIndexC
                 >
                   Previous
                 </Button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm ">
                   {activeIndex + 1} of {files.length}
                 </span>
                 <Button
@@ -176,30 +200,6 @@ export function FilePreview({ files, isOpen, onClose, currentIndex = 0, onIndexC
                 <Download className="mr-2 h-4 w-4" />
                 Download
               </Button>
-            </div>
-
-            {/* File Info */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-gray-500">Size:</span>
-                <p className="font-medium">{formatFileSize(currentFile.fileSize)}</p>
-              </div>
-              <div>
-                <span className="text-gray-500">Type:</span>
-                <p className="font-medium">{getFileType(currentFile.mimeType)}</p>
-              </div>
-              <div>
-                <span className="text-gray-500">Uploaded:</span>
-                <p className="font-medium">
-                  {new Date(currentFile.uploadedAt).toLocaleDateString()}
-                </p>
-              </div>
-              {currentFile.uploadedBy && (
-                <div>
-                  <span className="text-gray-500">By:</span>
-                  <p className="font-medium">{currentFile.uploadedBy.name}</p>
-                </div>
-              )}
             </div>
           </div>
         </div>

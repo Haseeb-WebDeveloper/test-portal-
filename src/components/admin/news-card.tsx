@@ -1,16 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
+import Link from 'next/link';
+import Image from 'next/image';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -21,18 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  Users, 
-  Globe,
-  Calendar,
-  User
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import Link from 'next/link';
+import { Users, Calendar } from 'lucide-react';
 
 interface NewsItem {
   id: string;
@@ -74,109 +55,88 @@ export function NewsCard({ news, onEdit, onDelete }: NewsCardProps) {
     }
   };
 
-  const truncateText = (text: string, maxLength: number) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+  const getInitials = (fullName?: string | null) => {
+    if (!fullName) return 'AC';
+    const parts = fullName.trim().split(' ').filter(Boolean);
+    if (parts.length === 0) return 'AC';
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   return (
     <>
-      <Card className="group hover:shadow-md transition-shadow">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-lg leading-tight mb-2">
-                {news.title}
-              </h3>
-              {news.description && (
-                <p className="text-muted-foreground text-sm mb-3">
-                  {truncateText(news.description, 120)}
+      <div className="relative">
+        <div className="absolute -top-[26px] right-0 z-10">
+          <div
+            className={`flex items-center gap-2 px-3 py-1 rounded-t-lg text-xs font-medium border border-b-0 bg-green-500 shadow-sm`}
+            style={{ background: '#18102B' }}
+          >
+            <div className={`w-2 h-2 rounded-full bg-green-500`}></div>
+            <span>Active</span>
+          </div>
+        </div>
+
+        <Link
+          href={`/admin/news/${news.id}`}
+          className="block rounded-xl overflow-hidden border border-primary/20 transition-all duration-300 group"
+        >
+          <div className="flex flex-col lg:flex-row">
+            {news.featuredImage && news.featuredImage.trim() !== '' && (
+              <div className="lg:w-1/2 relative">
+                <Image
+                  src={news.featuredImage}
+                  alt={news.title}
+                  width={400}
+                  height={300}
+                  className="object-cover w-full h-48 lg:h-64"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+              </div>
+            )}
+
+            <div className={`${news.featuredImage ? 'lg:w-2/3' : 'w-full'} p-6 flex flex-col gap-6 justify-between`}>
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold  mb-3 transition-colors">{news.title}</h2>
+
+                <p className="figma-paragraph mb-4 line-clamp-2">
+                  {news.description || 'Leverage our AI services and be in the top 1%. Lorem ipsum dolor sit amet...'}
                 </p>
-              )}
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/admin/news/${news.id}`}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    View
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(news)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </CardHeader>
 
-        <CardContent className="pt-0">
-          {/* Featured Image */}
-          {news.featuredImage && (
-            <div className="mb-4">
-              <img
-                src={news.featuredImage}
-                alt={news.title}
-                className="w-full h-48 object-cover rounded-lg"
-              />
-            </div>
-          )}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex -space-x-2">
+                    <div className="w-8 h-8 rounded-full bg-foreground/10 border border-primary/20 flex items-center justify-center text-xs font-medium">
+                      {getInitials(news.creator?.name)}
+                    </div>
+                    {news.sendToAll && (
+                      <div className="w-8 h-8 rounded-full bg-purple-600 border-2 border-white/20 flex items-center justify-center text-xs font-medium">
+                        ALL
+                      </div>
+                    )}
+                  </div>
 
-          {/* Content Preview */}
-          <div className="mb-4">
-            <p className="text-sm text-muted-foreground">
-              {truncateText(news.content, 200)}
-            </p>
-          </div>
+                  <div className="text-foreground/70 text-sm">
+                    <Users className="w-4 h-4 inline mr-1" />
+                    {news.sendToAll ? 'Shared with all clients' : `Shared with ${news.sendTo.length} specific clients`}
+                  </div>
+                </div>
+              </div>
 
-          {/* Recipients */}
-          <div className="mb-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              {news.sendToAll ? (
-                <>
-                  <Globe className="h-4 w-4" />
-                  <span>All users</span>
-                </>
-              ) : (
-                <>
-                  <Users className="h-4 w-4" />
-                  <span>{news.sendTo.length} selected users</span>
-                </>
-              )}
+              <div className="flex items-center /60 text-sm">
+                <Calendar className="w-4 h-4 mr-2" />
+                {formatDate(news.createdAt)}
+              </div>
             </div>
           </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={news.creator.avatar || ''} />
-                <AvatarFallback className="text-xs">
-                  {news.creator.name.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span>{news.creator.name}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>{formatDistanceToNow(new Date(news.createdAt), { addSuffix: true })}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        </Link>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

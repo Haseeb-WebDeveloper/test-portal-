@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { prisma } from '@/lib/prisma';
-import { ContractStatus } from '@/types/enums';
+import { ContractStatus, RoomType } from '@/types/enums';
 
 export async function GET(
   request: NextRequest,
@@ -82,6 +82,17 @@ export async function GET(
             }
           },
           orderBy: { createdAt: 'desc' }
+        },
+        rooms: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            type: true,
+          },
+          where: {
+            deletedAt: null,
+          },
         }
       }
     });
@@ -140,7 +151,9 @@ export async function PATCH(
       priority,
       progressPercentage,
       tags,
-      media
+      media,
+      roomName,
+      roomAvatar
     } = body;
 
     // Check if contract exists
@@ -205,9 +218,52 @@ export async function PATCH(
               }
             }
           }
+        },
+        rooms: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            type: true,
+          },
+          where: {
+            deletedAt: null,
+          },
         }
       }
     });
+
+    // Handle room update/creation
+    if (roomName !== undefined || roomAvatar !== undefined) {
+      let existingRoom = await prisma.room.findFirst({
+        where: {
+          contractId: contract.id,
+          deletedAt: null,
+        },
+      });
+
+      if (existingRoom) {
+        await prisma.room.update({
+          where: { id: existingRoom.id },
+          data: {
+            ...(roomName !== undefined && { name: roomName }),
+            ...(roomAvatar !== undefined && { avatar: roomAvatar }),
+            updatedBy: dbUser.id,
+          },
+        });
+      } else if (roomName) { // Create new room if it doesn't exist and roomName is provided
+        await prisma.room.create({
+          data: {
+            name: roomName,
+            type: RoomType.AGENCY_INTERNAL,
+            clientId: contract.clientId,
+            contractId: contract.id,
+            avatar: roomAvatar,
+            createdBy: dbUser.id,
+          },
+        });
+      }
+    }
 
     return NextResponse.json({ contract });
 

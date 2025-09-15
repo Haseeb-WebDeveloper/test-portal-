@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
-import { ContractStatus, ProposalStatus } from '@/types/enums';
+import { prisma } from "@/lib/prisma";
+import { ContractStatus, ProposalStatus } from "@/types/enums";
 
 export interface DashboardData {
   contracts: {
@@ -41,41 +41,45 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     clientsData,
     newsData,
     userRooms,
-    unreadMessagesCount
+    unreadMessagesCount,
   ] = await Promise.all([
     // Contracts data - get counts by status
     prisma.contract.groupBy({
-      by: ['status'],
+      by: ["status"],
       where: {
         deletedAt: null,
         status: {
-          in: [ContractStatus.ACTIVE, ContractStatus.DRAFT, ContractStatus.PENDING_APPROVAL]
-        }
+          in: [
+            ContractStatus.ACTIVE,
+            ContractStatus.DRAFT,
+            ContractStatus.PENDING_APPROVAL,
+          ],
+        },
       },
       _count: {
-        status: true
-      }
+        status: true,
+      },
     }),
 
     // Proposals data - get counts by status
     prisma.proposal.groupBy({
-      by: ['status'],
+      by: ["status"],
       where: {
         deletedAt: null,
         status: {
-          in: [ProposalStatus.DRAFT, ProposalStatus.SENT, ProposalStatus.SEEN]
-        }
+          in: [ProposalStatus.DRAFT, ProposalStatus.SENT, ProposalStatus.SEEN],
+        },
       },
       _count: {
-        status: true
-      }
+        status: true,
+      },
     }),
 
     // Recent 5 clients with their activity
     prisma.client.findMany({
       where: {
         deletedAt: null,
-        isActive: true
+        isActive: true,
       },
       select: {
         id: true,
@@ -85,41 +89,45 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
         contracts: {
           where: {
             deletedAt: null,
-            status: ContractStatus.ACTIVE
+            status: ContractStatus.ACTIVE,
           },
-          select: { id: true }
+          select: { id: true },
         },
         proposals: {
           where: {
             deletedAt: null,
             status: {
-              in: [ProposalStatus.DRAFT, ProposalStatus.SENT, ProposalStatus.SEEN]
-            }
+              in: [
+                ProposalStatus.DRAFT,
+                ProposalStatus.SENT,
+                ProposalStatus.SEEN,
+              ],
+            },
           },
-          select: { id: true }
-        }
+          select: { id: true },
+        },
       },
       orderBy: {
-        updatedAt: 'desc'
+        updatedAt: "desc",
       },
-      take: 5
+      take: 5,
     }),
 
     // Recent 3 news
     prisma.news.findMany({
       where: {
-        deletedAt: null
+        deletedAt: null,
       },
       select: {
         id: true,
         title: true,
         featuredImage: true,
-        createdAt: true
+        createdAt: true,
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: "desc",
       },
-      take: 3
+      take: 3,
     }),
 
     // User's rooms for message calculation
@@ -130,8 +138,8 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
         room: {
           isActive: true,
           isArchived: false,
-          deletedAt: null
-        }
+          deletedAt: null,
+        },
       },
       select: {
         room: {
@@ -141,22 +149,22 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
             lastMessageAt: true,
             messages: {
               where: {
-                isDeleted: false
+                isDeleted: false,
               },
               select: {
                 id: true,
                 content: true,
-                createdAt: true
+                createdAt: true,
               },
               orderBy: {
-                createdAt: 'desc'
+                createdAt: "desc",
               },
-              take: 1
-            }
-          }
+              take: 1,
+            },
+          },
         },
-        lastReadAt: true
-      }
+        lastReadAt: true,
+      },
     }),
 
     // Calculate unread messages count - using Prisma query instead of raw SQL for now
@@ -170,13 +178,13 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
               isActive: true,
               OR: [
                 { lastReadAt: null },
-                { lastReadAt: { lt: new Date() } } // This is a simplified version
-              ]
-            }
-          }
-        }
-      }
-    })
+                { lastReadAt: { lt: new Date() } }, // This is a simplified version
+              ],
+            },
+          },
+        },
+      },
+    }),
   ]);
 
   // Process contracts data
@@ -187,7 +195,9 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
 
   const contracts = {
     active: contractsByStatus[ContractStatus.ACTIVE] || 0,
-    drafts: (contractsByStatus[ContractStatus.DRAFT] || 0) + (contractsByStatus[ContractStatus.PENDING_APPROVAL] || 0)
+    drafts:
+      (contractsByStatus[ContractStatus.DRAFT] || 0) +
+      (contractsByStatus[ContractStatus.PENDING_APPROVAL] || 0),
   };
 
   // Process proposals data
@@ -197,20 +207,24 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   }, {} as Record<string, number>);
 
   const proposals = {
-    new: (proposalsByStatus[ProposalStatus.SENT] || 0) + (proposalsByStatus[ProposalStatus.SEEN] || 0),
-    pending: proposalsByStatus[ProposalStatus.DRAFT] || 0
+    new:
+      (proposalsByStatus[ProposalStatus.SENT] || 0) +
+      (proposalsByStatus[ProposalStatus.SEEN] || 0),
+    pending: proposalsByStatus[ProposalStatus.DRAFT] || 0,
   };
 
   // Process clients data
-  const clients = clientsData.map(client => {
+  const clients = clientsData.map((client) => {
     const now = new Date();
-    const diffInDays = Math.floor((now.getTime() - client.updatedAt.getTime()) / (1000 * 60 * 60 * 24));
-    
-    let lastActivity = 'No recent activity';
+    const diffInDays = Math.floor(
+      (now.getTime() - client.updatedAt.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    let lastActivity = "No recent activity";
     if (diffInDays === 0) {
-      lastActivity = 'Updated today';
+      lastActivity = "Updated today";
     } else if (diffInDays === 1) {
-      lastActivity = 'Updated yesterday';
+      lastActivity = "Updated yesterday";
     } else if (diffInDays < 7) {
       lastActivity = `${diffInDays} days ago`;
     } else {
@@ -223,16 +237,16 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
       avatar: client.avatar,
       activeContracts: client.contracts.length,
       pendingProposals: client.proposals.length,
-      lastActivity
+      lastActivity,
     };
   });
 
   // Process news data
-  const news = newsData.map(item => ({
+  const news = newsData.map((item) => ({
     id: item.id,
     title: item.title,
     featuredImage: item.featuredImage,
-    createdAt: item.createdAt.toISOString()
+    createdAt: item.createdAt.toISOString(),
   }));
 
   // Process rooms and unread messages
@@ -240,22 +254,24 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     userRooms.map(async (participant) => {
       const room = participant.room;
       const lastMessage = room.messages[0];
-      
+
       // Calculate actual unread count for this room
       const unreadCount = await getRoomUnreadCount(userId, room.id);
 
       return {
         id: room.id,
         name: room.name,
-        lastMessage: lastMessage ? (lastMessage.content || 'Message') : 'No messages yet',
-        unreadCount
+        lastMessage: lastMessage
+          ? lastMessage.content || "Message"
+          : "No messages yet",
+        unreadCount,
       };
     })
   );
 
   // Filter rooms with unread messages and sort by unread count
   let roomsWithUnread = recentRooms
-    .filter(room => room.unreadCount > 0)
+    .filter((room) => room.unreadCount > 0)
     .sort((a, b) => b.unreadCount - a.unreadCount)
     .slice(0, 3);
 
@@ -274,23 +290,26 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     clients,
     news,
     unreadMessages,
-    recentRooms: roomsWithUnread
+    recentRooms: roomsWithUnread,
   };
 
   return result;
 }
 
 // Helper function to get user's unread messages count for a specific room
-export async function getRoomUnreadCount(userId: string, roomId: string): Promise<number> {
+export async function getRoomUnreadCount(
+  userId: string,
+  roomId: string
+): Promise<number> {
   const participant = await prisma.roomParticipant.findFirst({
     where: {
       userId: userId,
       roomId: roomId,
-      isActive: true
+      isActive: true,
     },
     select: {
-      lastReadAt: true
-    }
+      lastReadAt: true,
+    },
   });
 
   if (!participant) {
@@ -302,9 +321,9 @@ export async function getRoomUnreadCount(userId: string, roomId: string): Promis
       roomId: roomId,
       isDeleted: false,
       createdAt: {
-        gt: participant.lastReadAt || new Date(0) // If never read, count all messages
-      }
-    }
+        gt: participant.lastReadAt || new Date(0), // If never read, count all messages
+      },
+    },
   });
 
   return unreadCount;

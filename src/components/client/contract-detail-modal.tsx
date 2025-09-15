@@ -81,7 +81,7 @@ export function ContractDetailModal({ contract, isOpen, onClose, onMessage }: Co
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-gray-900 border-gray-700 text-white">
+      <DialogContent className="max-w-2xl mach-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700 text-white">
         <DialogHeader className="space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">

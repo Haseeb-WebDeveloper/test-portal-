@@ -1,15 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { NewsCard } from './news-card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Plus, Search, Filter, SortAsc, SortDesc } from 'lucide-react';
-import { toast } from 'sonner';
-import Link from 'next/link';
+import { useState, useEffect } from "react";
+import { NewsCard } from "./news-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Plus, Search, Filter, SortAsc, SortDesc } from "lucide-react";
+import { toast } from "sonner";
+import Link from "next/link";
 
 interface NewsItem {
   id: string;
@@ -34,41 +40,46 @@ interface NewsListProps {}
 export function NewsList({}: NewsListProps) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(false);
 
-  const fetchNews = async (pageNum = 1, searchTerm = '', sort = sortBy, order = sortOrder) => {
+  const fetchNews = async (
+    pageNum = 1,
+    searchTerm = "",
+    sort = sortBy,
+    order = sortOrder
+  ) => {
     try {
       const params = new URLSearchParams({
         page: pageNum.toString(),
-        limit: '12',
+        limit: "12",
         search: searchTerm,
         sortBy: sort,
-        sortOrder: order
+        sortOrder: order,
       });
 
       const response = await fetch(`/api/admin/news?${params}`);
       if (response.ok) {
         const data = await response.json();
-        
+
         if (pageNum === 1) {
           setNews(data.news);
         } else {
-          setNews(prev => [...prev, ...data.news]);
+          setNews((prev) => [...prev, ...data.news]);
         }
-        
+
         setTotalPages(data.pagination.pages);
         setHasMore(data.pagination.page < data.pagination.pages);
       } else {
-        throw new Error('Failed to fetch news');
+        throw new Error("Failed to fetch news");
       }
     } catch (error) {
-      console.error('Error fetching news:', error);
-      toast.error('Failed to fetch news');
+      console.error("Error fetching news:", error);
+      toast.error("Failed to fetch news");
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +96,7 @@ export function NewsList({}: NewsListProps) {
   };
 
   const handleSort = (field: string) => {
-    const newOrder = sortBy === field && sortOrder === 'desc' ? 'asc' : 'desc';
+    const newOrder = sortBy === field && sortOrder === "desc" ? "asc" : "desc";
     setSortBy(field);
     setSortOrder(newOrder);
     setPage(1);
@@ -105,18 +116,18 @@ export function NewsList({}: NewsListProps) {
   const handleDelete = async (id: string) => {
     try {
       const response = await fetch(`/api/admin/news/${id}`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
 
       if (response.ok) {
-        setNews(prev => prev.filter(item => item.id !== id));
-        toast.success('News deleted successfully');
+        setNews((prev) => prev.filter((item) => item.id !== id));
+        toast.success("News deleted successfully");
       } else {
-        throw new Error('Failed to delete news');
+        throw new Error("Failed to delete news");
       }
     } catch (error) {
-      console.error('Error deleting news:', error);
-      toast.error('Failed to delete news');
+      console.error("Error deleting news:", error);
+      toast.error("Failed to delete news");
     }
   };
 
@@ -130,25 +141,10 @@ export function NewsList({}: NewsListProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">News Management</h1>
-          <p className="text-muted-foreground">Manage and publish news to your users</p>
-        </div>
-        <Button asChild>
-          <Link href="/admin/news/create">
-            <Plus className="mr-2 h-4 w-4" />
-            Create News
-          </Link>
-        </Button>
-      </div>
-
       {/* Filters */}
-      <Card>
+      {/* <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -161,7 +157,6 @@ export function NewsList({}: NewsListProps) {
               </div>
             </div>
 
-            {/* Sort */}
             <div className="flex gap-2">
               <Select value={sortBy} onValueChange={(value) => handleSort(value)}>
                 <SelectTrigger className="w-40">
@@ -189,7 +184,7 @@ export function NewsList({}: NewsListProps) {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* News Grid */}
       {news.length === 0 ? (
@@ -198,7 +193,9 @@ export function NewsList({}: NewsListProps) {
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">No news found</h3>
               <p className="text-muted-foreground mb-4">
-                {search ? 'Try adjusting your search terms' : 'Get started by creating your first news item'}
+                {search
+                  ? "Try adjusting your search terms"
+                  : "Get started by creating your first news item"}
               </p>
               {!search && (
                 <Button asChild>
@@ -213,7 +210,7 @@ export function NewsList({}: NewsListProps) {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {news.map((item) => (
               <NewsCard
                 key={item.id}
@@ -238,7 +235,7 @@ export function NewsList({}: NewsListProps) {
                     Loading...
                   </>
                 ) : (
-                  'Load More'
+                  "Load More"
                 )}
               </Button>
             </div>

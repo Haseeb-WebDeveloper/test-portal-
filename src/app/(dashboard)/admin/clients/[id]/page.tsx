@@ -76,15 +76,13 @@ export default function ClientDetailsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="flex items-center gap-2"
+          <Link
+            href="/admin/clients"
+            className="flex items-center gap-2 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
-          </Button>
+          </Link>
           <h1 className="text-3xl font-bold">Client Details</h1>
         </div>
         <Button
@@ -113,7 +111,7 @@ export default function ClientDetailsPage() {
               </div>
             ) : (
               <Avatar className="w-24 h-24">
-                <AvatarFallback className="text-white font-bold text-2xl">
+                <AvatarFallback className=" font-bold text-2xl">
                   {client.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>

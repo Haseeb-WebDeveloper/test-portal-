@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { prisma } from '@/lib/prisma';
-import { ContractStatus } from '@/types/enums';
+import { ContractStatus, RoomType } from '@/types/enums';
 
 export async function GET(request: NextRequest) {
   try {
@@ -153,7 +153,10 @@ export async function POST(request: NextRequest) {
       estimatedHours,
       priority = 3,
       tags = [],
-      media
+      media,
+      createRoom,
+      roomName,
+      roomAvatar
     } = body;
 
     // Validate required fields
@@ -210,6 +213,20 @@ export async function POST(request: NextRequest) {
         }
       }
     });
+
+    // Create a room if requested
+    if (createRoom && roomName) {
+      await prisma.room.create({
+        data: {
+          name: roomName,
+          type: RoomType.AGENCY_INTERNAL,
+          clientId: contract.clientId,
+          contractId: contract.id,
+          avatar: roomAvatar,
+          createdBy: dbUser.id,
+        },
+      });
+    }
 
     return NextResponse.json({ contract }, { status: 201 });
 

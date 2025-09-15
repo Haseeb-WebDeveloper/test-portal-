@@ -128,7 +128,10 @@ export async function POST(request: NextRequest) {
       description,
       status = ProposalStatus.DRAFT,
       tags = [],
-      media
+      media,
+      createRoom,
+      roomName,
+      roomAvatar
     } = body;
 
     // Validate required fields
@@ -179,6 +182,20 @@ export async function POST(request: NextRequest) {
         }
       }
     });
+
+    // Optionally create a discussion room linked to this proposal
+    if (createRoom && roomName && roomName.trim()) {
+      await prisma.room.create({
+        data: {
+          name: roomName.trim(),
+          type: 'AGENCY_INTERNAL',
+          proposalId: proposal.id,
+          clientId: clientId,
+          createdBy: dbUser.id,
+          ...(roomAvatar && { avatar: roomAvatar })
+        }
+      });
+    }
 
     return NextResponse.json({ proposal }, { status: 201 });
 

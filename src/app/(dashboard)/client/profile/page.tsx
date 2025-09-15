@@ -5,37 +5,26 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import FileUpload from "@/components/ui/file-upload";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { UserRole } from "@/types/enums";
 import {
   Loader2,
-  Edit,
   Save,
-  X,
   User,
   Mail,
   Shield,
-  Calendar,
-  CheckCircle,
   Camera,
   Building,
   Phone,
   MapPin,
+  Globe,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -59,10 +48,10 @@ interface ClientProfile {
 export default function ClientProfilePage() {
   const { user, loading } = useAuth();
   const [profile, setProfile] = useState<ClientProfile | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [editForm, setEditForm] = useState({
+  const [isUploading, setIsUploading] = useState(false);
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "",
@@ -83,7 +72,7 @@ export default function ClientProfilePage() {
         if (response.ok) {
           const data = await response.json();
           setProfile(data);
-          setEditForm({
+          setFormData({
             name: data.name,
             email: data.email,
             role: data.role,
@@ -111,53 +100,76 @@ export default function ClientProfilePage() {
     }
   }, [user]);
 
-  const handleEdit = () => {
-    setIsEditing(true);
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  const handleCancel = () => {
-    if (profile) {
-      setEditForm({
-        name: profile.name,
-        email: profile.email,
-        role: profile.role,
-        isActive: profile.isActive,
-        avatar: profile.avatar || "",
-        company: profile.company || "",
-        phone: profile.phone || "",
-        address: profile.address || "",
-        industry: profile.industry || "",
-        website: profile.website || "",
-      });
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File too large. Please select an image smaller than 5MB.");
+      return;
     }
-    setIsEditing(false);
+
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const result = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(result.message || "Upload failed");
+      }
+      
+      const uploadedUrl = result.url;
+      if (!uploadedUrl) {
+        toast.error("Upload succeeded but no URL returned.");
+        return;
+      }
+      
+      handleInputChange("avatar", uploadedUrl);
+      toast.success("Avatar updated successfully");
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error(error?.message || "Failed to upload avatar. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const handleSave = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!profile) return;
 
     // Form validation
-    if (!editForm.name.trim()) {
+    if (!formData.name.trim()) {
       toast.error("Name is required");
       return;
     }
 
-    if (!editForm.email.trim()) {
+    if (!formData.email.trim()) {
       toast.error("Email is required");
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(editForm.email)) {
+    if (!emailRegex.test(formData.email)) {
       toast.error("Please enter a valid email address");
       return;
     }
 
     // Website validation (if provided)
-    if (editForm.website && editForm.website.trim()) {
+    if (formData.website && formData.website.trim()) {
       const websiteRegex = /^https?:\/\/.+/;
-      if (!websiteRegex.test(editForm.website)) {
+      if (!websiteRegex.test(formData.website)) {
         toast.error(
           "Please enter a valid website URL (starting with http:// or https://)"
         );
@@ -172,13 +184,12 @@ export default function ClientProfilePage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
         const updatedProfile = await response.json();
         setProfile(updatedProfile);
-        setIsEditing(false);
         toast.success("Profile updated successfully");
       } else {
         const error = await response.json();
@@ -192,17 +203,6 @@ export default function ClientProfilePage() {
     }
   };
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case "CLIENT":
-        return "default";
-      case "CLIENT_MEMBER":
-        return "secondary";
-      default:
-        return "secondary";
-    }
-  };
-
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case "CLIENT":
@@ -212,16 +212,6 @@ export default function ClientProfilePage() {
       default:
         return role;
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   if (loading || isLoading) {
@@ -247,39 +237,30 @@ export default function ClientProfilePage() {
   }
 
   return (
-    <div className="container mx-auto p-6 lg:p-12 space-y-6">
+    <div className="container mx-auto p-6 lg:px-12 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-          <p className="text-muted-foreground">
-            Manage your account information and settings
-          </p>
+          <h1 className="figma-h3">Profile</h1>
+          <p className="text-muted-foreground">Manage your account settings and profile information</p>
         </div>
-        <Button onClick={handleEdit} disabled={isEditing}>
-          <Edit className="h-4 w-4 mr-2" />
-          Edit Profile
-        </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Profile Information Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Profile Information
-            </CardTitle>
-            <CardDescription>Your personal account details</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Avatar and Basic Info */}
+      {/* Profile Form */}
+      <div className="max-w-2xl">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Avatar Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Camera className="h-5 w-5" />
+              <h2 className="text-lg font-semibold">Profile Picture</h2>
+            </div>
             <div className="flex items-center space-x-4">
               <div className="relative group">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={profile.avatar || ""} alt={profile.name} />
+                  <AvatarImage src={formData.avatar || ""} alt="Profile" />
                   <AvatarFallback className="text-lg">
-                    {profile.name
+                    {formData.name
                       .split(" ")
                       .map((n) => n[0])
                       .join("")
@@ -287,212 +268,185 @@ export default function ClientProfilePage() {
                   </AvatarFallback>
                 </Avatar>
                 <Button
+                  type="button"
                   size="sm"
                   variant="outline"
                   className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={handleEdit}
+                  onClick={() => document.getElementById('avatar-upload')?.click()}
+                  disabled={isUploading}
                 >
-                  <Camera className="h-4 w-4" />
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
-              <div className="space-y-1">
-                <h3 className="text-xl font-semibold">{profile.name}</h3>
-                <div className="flex items-center gap-2">
-                  <Badge variant={getRoleBadgeVariant(profile.role)}>
-                    {getRoleDisplayName(profile.role)}
-                  </Badge>
-                  {profile.isActive ? (
-                    <Badge
-                      variant="outline"
-                      className="text-green-600 border-green-600"
-                    >
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Active
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className="text-red-600 border-red-600"
-                    >
-                      <X className="h-3 w-3 mr-1" />
-                      Inactive
-                    </Badge>
-                  )}
-                </div>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">
+                  Click the camera icon to change your profile picture
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  JPG, PNG or GIF. Max size 5MB.
+                </p>
               </div>
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+              />
             </div>
+          </div>
 
-            {/* Profile Details */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Email</p>
-                  <p className="text-sm text-muted-foreground">
-                    {profile.email}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <Shield className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Role</p>
-                  <p className="text-sm text-muted-foreground">
-                    {getRoleDisplayName(profile.role)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Member Since</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(profile.createdAt)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Last Updated</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(profile.updatedAt)}
-                  </p>
-                </div>
-              </div>
+          {/* Personal Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              <h2 className="text-lg font-semibold">Personal Information</h2>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Edit Profile Dialog */}
-        <Dialog open={isEditing} onOpenChange={setIsEditing}>
-          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Profile</DialogTitle>
-              <DialogDescription>
-                Make changes to your profile information. Click save when you're
-                done.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              {/* Avatar Upload */}
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Profile Picture</Label>
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={editForm.avatar || ""} alt="Profile" />
-                    <AvatarFallback className="text-lg">
-                      {editForm.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <FileUpload
-                      value={editForm.avatar}
-                      onChange={(url) =>
-                        setEditForm({ ...editForm, avatar: url || "" })
-                      }
-                      accept="image/*"
-                      maxSize={2}
-                      label=""
-                      placeholder="Click to upload or drag and drop"
-                    />
-                    <div className="flex items-center justify-between mt-1">
-                      <p className="text-xs text-muted-foreground">
-                        Recommended: Square image, max 2MB
-                      </p>
-                      {editForm.avatar && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setEditForm({ ...editForm, avatar: "" })
-                          }
-                          className="text-xs text-muted-foreground hover:text-destructive"
-                        >
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder="Enter your name"
+                  required
+                />
               </div>
 
-              {/* Personal Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
-                  <Input
-                    id="name"
-                    value={editForm.name}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, name: e.target.value })
-                    }
-                    placeholder="Enter your name"
-                    required
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+            </div>
+          </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={editForm.email}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, email: e.target.value })
-                    }
-                    placeholder="Enter your email"
-                    required
-                  />
-                </div>
+          {/* Company Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              <h2 className="text-lg font-semibold">Company Information</h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="company">Company Name</Label>
+                <Input
+                  id="company"
+                  value={formData.company}
+                  onChange={(e) => handleInputChange("company", e.target.value)}
+                  placeholder="Enter company name"
+                />
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                  placeholder="Enter phone number"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="industry">Industry</Label>
+                <Input
+                  id="industry"
+                  value={formData.industry}
+                  onChange={(e) => handleInputChange("industry", e.target.value)}
+                  placeholder="Enter industry"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  value={formData.website}
+                  onChange={(e) => handleInputChange("website", e.target.value)}
+                  placeholder="https://example.com"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => handleInputChange("address", e.target.value)}
+                placeholder="Enter company address"
+              />
+            </div>
+          </div>
+
+          {/* Account Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              <h2 className="text-lg font-semibold">Account Settings</h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(value) => handleInputChange("role", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(UserRole).map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {getRoleDisplayName(role)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center space-x-2 pt-6">
                 <input
                   type="checkbox"
                   id="isActive"
-                  checked={editForm.isActive}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, isActive: e.target.checked })
-                  }
+                  checked={formData.isActive}
+                  onChange={(e) => handleInputChange("isActive", e.target.checked)}
                   className="rounded border-gray-300"
                 />
                 <Label htmlFor="isActive">Account is active</Label>
               </div>
             </div>
+          </div>
 
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={handleCancel}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSave} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isSaving} className="min-w-[120px]">
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

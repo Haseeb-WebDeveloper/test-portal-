@@ -1,43 +1,52 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { 
-  Calendar, 
-  FileText, 
-  MessageSquare, 
-  Newspaper,
-  RefreshCw,
-  ArrowRight,
-  CheckCircle,
-  Clock
-} from 'lucide-react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { ClientDashboardData } from '@/lib/client-dashboard';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Calendar, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { ClientDashboardData } from "@/lib/client-dashboard";
+import { useAuth } from "@/hooks/use-auth";
+import { getGreeting } from "@/utils/greeting";
+import DashboardMessagesCard, {
+  MessagesCardItem,
+} from "@/components/common/dashboard-messages-card";
 
 interface ClientDashboardClientProps {
   initialData: ClientDashboardData;
 }
 
-export function ClientDashboardClient({ initialData }: ClientDashboardClientProps) {
+export function ClientDashboardClient({
+  initialData,
+}: ClientDashboardClientProps) {
   const [data, setData] = useState(initialData);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { user } = useAuth();
 
+  const messageItems: MessagesCardItem[] = (data.recentRooms || []).map(
+    (room) => ({
+      id: room.id,
+      title: room.name,
+      subtitle: room.lastMessage ?? "",
+      avatarUrl: null,
+      avatarFallback: (room.name?.[0] || "?").toUpperCase(),
+      href: `/messages?roomId=${room.id}`,
+    })
+  );
 
   const refreshData = async () => {
     setIsRefreshing(true);
     try {
-      const response = await fetch('/api/client/dashboard');
+      const response = await fetch("/api/client/dashboard");
       if (response.ok) {
         const newData = await response.json();
         setData(newData);
       }
     } catch (error) {
-      console.error('Error refreshing client dashboard data:', error);
+      console.error("Error refreshing client dashboard data:", error);
     } finally {
       setIsRefreshing(false);
     }
@@ -48,8 +57,12 @@ export function ClientDashboardClient({ initialData }: ClientDashboardClientProp
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Good Morning, Client 👋</h1>
-          <p className="text-gray-400 mt-1">Here's your latest updates!</p>
+          <h1 className="figma-h3">
+            {getGreeting(
+              user?.name ? user.name.split(" ").slice(0, 2).join(" ") : ""
+            )}
+          </h1>
+          <p className="figma-paragraph">Here's your latest updates!</p>
         </div>
         <div className="flex items-center gap-4">
           <Button
@@ -57,247 +70,226 @@ export function ClientDashboardClient({ initialData }: ClientDashboardClientProp
             disabled={isRefreshing}
             variant="outline"
             size="sm"
-            className="bg-transparent border-gray-600 text-white hover:bg-gray-800"
+            className="bg-transparent border-primary/20 text-foreground hover:bg-primary/10"
           >
-            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            {isRefreshing ? "Refreshing..." : "Refresh"}
           </Button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Contracts Card */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Contracts</CardTitle>
-            <Calendar className="h-4 w-4 text-gray-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-green-400">{data.contracts.active}</span>
-              <span className="text-sm text-gray-400">Active</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Proposals Card */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Proposals to Review</CardTitle>
-            <FileText className="h-4 w-4 text-gray-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl font-bold text-purple-400">{data.proposals.new}</span>
-                <span className="text-sm text-gray-400">New</span>
+      {/* Main contetn */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* left content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Contracts Card */}
+            <Link
+              href="/client/contracts"
+              className="bg-transparent border-primary/20 px-7 py-6 border rounded-lg space-y-8"
+            >
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/icons/contract.svg"
+                  alt="Contracts"
+                  width={20}
+                  height={20}
+                />
+                <p className="figma-paragraph text-foreground">Contracts</p>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl font-bold text-orange-400">{data.proposals.pending}</span>
-                <span className="text-sm text-gray-400">Pending</span>
+              <div className="flex items-center gap-2 justify-between">
+                <div className="flex items-end gap-2">
+                  <span className="figma-h3 leading-[60%] text-figma-success">
+                    {data.contracts.active}
+                  </span>
+                  <span className="text-sm text-foreground leading-[100%]">
+                    Active
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="mt-2">
-              <Link href="/client/proposal">
-                <Button variant="ghost" size="sm" className="text-xs text-gray-400 hover:text-white p-0 h-auto">
-                  View proposals
-                  <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+            </Link>
 
-        {/* Messages Card */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Messages</CardTitle>
-            <MessageSquare className="h-4 w-4 text-gray-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-red-400">{data.unreadMessages}</span>
-              <span className="text-sm text-gray-400">unseen</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* News Card */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Recent News</CardTitle>
-            <Newspaper className="h-4 w-4 text-gray-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-blue-400">{data.news.length}</span>
-              <span className="text-sm text-gray-400">posts</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Ongoing Contracts */}
-        <div className="lg:col-span-2">
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white flex items-center">
-                  <RefreshCw className="w-5 h-5 mr-2" />
-                  Ongoing Contracts
-                </CardTitle>
-                <Link href="/client/contracts">
-                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                    View all contracts
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
+            {/* Proposals Card */}
+            <Link
+              href="/client/proposal"
+              className="bg-transparent border-primary/20 px-7 py-6 border rounded-lg space-y-8"
+            >
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/icons/list.svg"
+                  alt="Proposals"
+                  width={20}
+                  height={20}
+                />
+                <p className="figma-paragraph text-foreground">Proposals</p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {data.ongoingContracts.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400">
-                    <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No ongoing contracts</p>
-                  </div>
-                ) : (
-                  data.ongoingContracts.map((contract) => (
-                    <div key={contract.id} className="p-4 bg-gray-700 rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-medium text-white">{contract.title}</h3>
-                        <Badge 
-                          variant="outline" 
-                          className={`${
-                            contract.status === 'ACTIVE' 
-                              ? 'border-green-500 text-green-400' 
-                              : 'border-gray-500 text-gray-400'
-                          }`}
-                        >
-                          {contract.status}
-                        </Badge>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm text-gray-400">
-                          <span>{contract.completedTasks} of {contract.totalTasks} tasks completed</span>
-                          <span>{contract.progressPercentage}%</span>
-                        </div>
-                        <Progress 
-                          value={contract.progressPercentage} 
-                          className="h-2"
-                        />
-                      </div>
+              <div className="flex items-center gap-2 justify-between">
+                <div className="flex items-end gap-2">
+                  <span className="figma-h3 leading-[60%] text-figma-primary">
+                    {data.proposals.new}
+                  </span>
+                  <span className="text-sm text-foreground leading-[100%]">
+                    New
+                  </span>
+                </div>
+                <div className="w-px h-8 bg-foreground/20"></div>
+                <div className="flex items-end gap-2">
+                  <span className="figma-h3 leading-[60%] text-figma-warning">
+                    {data.proposals.pending}
+                  </span>
+                  <span className="text-sm text-foreground leading-[100%]">
+                    Pending
+                  </span>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Ongoing Contracts */}
+          <div className="lg:col-span-2">
+            <Card className="bg-transparent border border-primary/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-foreground flex items-center">
+                    Ongoing Contracts
+                  </CardTitle>
+                  <Link href="/client/contracts">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-foreground/70 hover:text-foreground"
+                    >
+                      View all contracts
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {data.ongoingContracts.length === 0 ? (
+                    <div className="text-center py-8 text-foreground/60">
+                      <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No ongoing contracts</p>
                     </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  ) : (
+                    data.ongoingContracts.map((contract) => (
+                      <div
+                        key={contract.id}
+                        className="p-4 border border-primary/20 rounded-lg"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-medium text-foreground">
+                            {contract.title}
+                          </h3>
+                          <Badge
+                            variant="outline"
+                            className={`${
+                              contract.status === "ACTIVE"
+                                ? "border-green-500 text-green-400"
+                                : "border-primary/30 text-foreground/70"
+                            }`}
+                          >
+                            {contract.status}
+                          </Badge>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm text-foreground/70">
+                            <span>
+                              {contract.completedTasks} of {contract.totalTasks}{" "}
+                              tasks completed
+                            </span>
+                            <span>{contract.progressPercentage}%</span>
+                          </div>
+                          <Progress
+                            value={contract.progressPercentage}
+                            className="h-2"
+                          />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Right Sidebar */}
         <div className="space-y-6">
-          {/* Messages Panel */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white flex items-center">
-                  <MessageSquare className="w-5 h-5 mr-2" />
-                  Messages
-                </CardTitle>
-                {data.unreadMessages > 0 && (
-                  <Badge variant="destructive" className="bg-red-500">
-                    {data.unreadMessages}+ unseen
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {data.recentRooms.length === 0 ? (
-                  <div className="text-center py-4 text-gray-400">
-                    <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No recent messages</p>
-                  </div>
-                ) : (
-                  data.recentRooms.map((room) => (
-                    <div key={room.id} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors cursor-pointer">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-xs font-semibold text-white">
-                          {room.name.substring(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white">{room.name}</p>
-                          <p className="text-xs text-gray-400">{room.lastMessage}</p>
-                        </div>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-gray-400" />
-                    </div>
-                  ))
-                )}
-                <Link href="/messages">
-                  <Button variant="ghost" size="sm" className="w-full text-gray-400 hover:text-white">
-                    View all messages
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Messages Panel - unified with admin */}
+          <DashboardMessagesCard
+            items={messageItems}
+            totalUnseen={data.unreadMessages}
+            emptyText="No recent messages"
+          />
 
-          {/* Recent News Panel */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white flex items-center">
-                  <Newspaper className="w-5 h-5 mr-2" />
-                  Recent news posted
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {data.news.length === 0 ? (
-                  <div className="text-center py-4 text-gray-400">
-                    <Newspaper className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No recent news</p>
-                  </div>
-                ) : (
-                  data.news.map((item) => (
-                    <div key={item.id} className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors cursor-pointer">
-                      {item.featuredImage ? (
-                        <div className="w-12 h-12 relative rounded-lg overflow-hidden">
-                          <Image
-                            src={item.featuredImage}
-                            alt={item.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center">
-                          <Newspaper className="w-6 h-6 text-gray-400" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{item.title}</p>
-                        <p className="text-xs text-gray-400">
-                          {new Date(item.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
+          {/* Recent News - unified with admin */}
+          <div
+            className="bg-transparent border border-primary/20 rounded-2xl px-0 py-0 shadow-md"
+            style={{ minWidth: 320 }}
+          >
+            <div className="flex items-center gap-3 px-5 pt-5 pb-3">
+              <Image
+                src="/icons/news.svg"
+                alt="Recent News"
+                width={22}
+                height={22}
+                className="opacity-90"
+              />
+              <span className="figma-paragraph text-foreground">
+                Recent news posted
+              </span>
+            </div>
+            <div>
+              {data.news.length === 0 && (
+                <div className="px-5 py-4 text-sm text-foreground/60">
+                  No news posted yet.
+                </div>
+              )}
+              {data.news.slice(0, 2).map((newsItem, idx) => (
+                <Link
+                  key={newsItem.id}
+                  href="/client/news"
+                  className={`flex items-center px-5 py-4 ${
+                    idx !== data.news.slice(0, 2).length - 1
+                      ? "border-b border-primary/20"
+                      : ""
+                  } group`}
+                  style={{ textDecoration: "none" }}
+                >
+                  {newsItem.featuredImage ? (
+                    <div className="flex-shrink-0 w-20 h-14 rounded overflow-hidden bg-primary/20">
+                      <Image
+                        src={newsItem.featuredImage}
+                        alt={newsItem.title}
+                        width={80}
+                        height={56}
+                        className="object-cover w-20 h-14"
+                      />
                     </div>
-                  ))
-                )}
-                <Link href="/client/news">
-                  <Button variant="ghost" size="sm" className="w-full text-gray-400 hover:text-white">
-                    View all news
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
+                  ) : (
+                    <div className="w-20 h-14 bg-gradient-to-r from-primary to-primary/20 rounded flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs text-foreground">Featured</span>
+                    </div>
+                  )}
+                  <div className="ml-4 flex-1">
+                    <div className="text-base font-medium leading-tight text-foreground">
+                      {newsItem.title}
+                    </div>
+                  </div>
                 </Link>
-              </div>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+            <div className="px-5 py-3 border-t border-primary/20">
+              <Link
+                href="/client/news"
+                className="text-sm text-foreground/80 hover:underline"
+              >
+                View all news
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

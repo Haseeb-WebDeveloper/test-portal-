@@ -55,6 +55,15 @@ export async function GET(
             status: true,
             createdAt: true
           }
+        },
+        rooms: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            isActive: true
+          },
+          where: { deletedAt: null }
         }
       }
     });
@@ -106,7 +115,10 @@ export async function PATCH(
       status,
       hasReviewed,
       tags,
-      media
+      media,
+      createRoom,
+      roomName,
+      roomAvatar
     } = body;
 
     // Check if proposal exists
@@ -150,9 +162,48 @@ export async function PATCH(
             name: true,
             email: true
           }
+        },
+        rooms: {
+          select: { id: true, name: true, avatar: true, isActive: true },
+          where: { deletedAt: null }
         }
       }
     });
+
+    // Optionally upsert a room for this proposal
+    if (createRoom) {
+      const existingRoom = await prisma.room.findFirst({
+        where: { proposalId: (await params).id, deletedAt: null }
+      });
+      if (existingRoom) {
+        await prisma.room.update({
+          where: { id: existingRoom.id },
+          data: {
+            ...(roomName && { name: roomName }),
+            ...(roomAvatar && { avatar: roomAvatar }),
+            updatedBy: dbUser.id
+          }
+        });
+      } else if (roomName) {
+        // Need clientId to create a room; fetch from proposal
+        const prop = await prisma.proposal.findUnique({
+          where: { id: (await params).id },
+          select: { clientId: true }
+        });
+        if (prop) {
+          await prisma.room.create({
+            data: {
+              name: roomName,
+              type: 'AGENCY_INTERNAL',
+              proposalId: (await params).id,
+              clientId: prop.clientId,
+              createdBy: dbUser.id,
+              ...(roomAvatar && { avatar: roomAvatar })
+            }
+          });
+        }
+      }
+    }
 
     return NextResponse.json({ proposal });
 
