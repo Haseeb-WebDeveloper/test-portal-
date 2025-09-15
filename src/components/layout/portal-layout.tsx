@@ -66,12 +66,19 @@ export function PortalLayout({ children, user }: PortalLayoutProps) {
   // Prefetch frequent admin routes to reduce transition wait
   useEffect(() => {
     const toPrefetch = [
+      // Admin
       "/admin",
       "/admin/profile",
       "/admin/clients",
       "/admin/contracts",
       "/admin/proposal",
       "/admin/news",
+      // Client
+      "/client",
+      "/client/profile",
+      "/client/contracts",
+      "/client/proposal",
+      "/client/news",
     ];
     toPrefetch.forEach((p) => router.prefetch(p));
   }, [router]);

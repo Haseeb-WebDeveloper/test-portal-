@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { getGreeting } from "@/utils/greeting";
 import DashboardMessagesCard, {
   MessagesCardItem,
 } from "@/components/common/dashboard-messages-card";
+import useSWR from "swr";
 
 interface ClientDashboardClientProps {
   initialData: ClientDashboardData;
@@ -23,8 +24,31 @@ export function ClientDashboardClient({
   initialData,
 }: ClientDashboardClientProps) {
   const [data, setData] = useState(initialData);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const { user } = useAuth();
+
+  // SWR for dashboard data with 60s cache
+  const { data: swrData } = useSWR(
+    "/api/client/dashboard",
+    async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to load dashboard");
+      return (await res.json()) as ClientDashboardData;
+    },
+    { 
+      fallbackData: initialData, 
+      revalidateOnFocus: false, 
+      keepPreviousData: true, 
+      dedupingInterval: 60000, 
+      refreshInterval: 0 
+    }
+  );
+
+  // Update local state when SWR data changes
+  useEffect(() => {
+    if (swrData && swrData !== data) {
+      setData(swrData);
+    }
+  }, [swrData, data]);
 
   const messageItems: MessagesCardItem[] = (data.recentRooms || []).map(
     (room) => ({
@@ -37,20 +61,7 @@ export function ClientDashboardClient({
     })
   );
 
-  const refreshData = async () => {
-    setIsRefreshing(true);
-    try {
-      const response = await fetch("/api/client/dashboard");
-      if (response.ok) {
-        const newData = await response.json();
-        setData(newData);
-      }
-    } catch (error) {
-      console.error("Error refreshing client dashboard data:", error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+  // Remove refreshData function as SWR handles revalidation automatically
 
   return (
     <div className="space-y-8">
@@ -64,17 +75,7 @@ export function ClientDashboardClient({
           </h1>
           <p className="figma-paragraph">Here's your latest updates!</p>
         </div>
-        <div className="flex items-center gap-4">
-          <Button
-            onClick={refreshData}
-            disabled={isRefreshing}
-            variant="outline"
-            size="sm"
-            className="bg-transparent border-primary/20 text-foreground hover:bg-primary/10"
-          >
-            {isRefreshing ? "Refreshing..." : "Refresh"}
-          </Button>
-        </div>
+        {/* Refresh button removed - SWR handles automatic revalidation */}
       </div>
 
       {/* Main contetn */}

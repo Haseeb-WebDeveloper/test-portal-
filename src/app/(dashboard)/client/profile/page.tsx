@@ -27,6 +27,8 @@ import {
   Globe,
 } from "lucide-react";
 import { toast } from "sonner";
+import useSWR from "swr";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ClientProfile {
   id: string;
@@ -48,7 +50,6 @@ interface ClientProfile {
 export default function ClientProfilePage() {
   const { user, loading } = useAuth();
   const [profile, setProfile] = useState<ClientProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
@@ -64,41 +65,40 @@ export default function ClientProfilePage() {
     website: "",
   });
 
-  // Fetch detailed user profile
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch("/api/auth/profile");
-        if (response.ok) {
-          const data = await response.json();
-          setProfile(data);
-          setFormData({
-            name: data.name,
-            email: data.email,
-            role: data.role,
-            isActive: data.isActive,
-            avatar: data.avatar || "",
-            company: data.company || "",
-            phone: data.phone || "",
-            address: data.address || "",
-            industry: data.industry || "",
-            website: data.website || "",
-          });
-        } else {
-          toast.error("Failed to fetch profile data");
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        toast.error("Error fetching profile data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchProfile();
+  // SWR for profile data with 60s cache
+  const { data: swrProfile, error, isLoading } = useSWR(
+    user ? "/api/auth/profile" : null,
+    async (url: string) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch profile");
+      return (await response.json()) as ClientProfile;
+    },
+    {
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+      dedupingInterval: 60000,
+      refreshInterval: 0,
     }
-  }, [user]);
+  );
+
+  // Update local state when SWR data changes
+  useEffect(() => {
+    if (swrProfile) {
+      setProfile(swrProfile);
+      setFormData({
+        name: swrProfile.name,
+        email: swrProfile.email,
+        role: swrProfile.role,
+        isActive: swrProfile.isActive,
+        avatar: swrProfile.avatar || "",
+        company: swrProfile.company || "",
+        phone: swrProfile.phone || "",
+        address: swrProfile.address || "",
+        industry: swrProfile.industry || "",
+        website: swrProfile.website || "",
+      });
+    }
+  }, [swrProfile]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
@@ -216,8 +216,101 @@ export default function ClientProfilePage() {
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="container mx-auto p-6 lg:px-12 space-y-6">
+        {/* Header Skeleton */}
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+
+        {/* Form Skeleton */}
+        <div className="max-w-2xl space-y-6">
+          {/* Avatar Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5" />
+              <Skeleton className="h-6 w-32" />
+            </div>
+            <div className="flex items-center space-x-4">
+              <Skeleton className="h-20 w-20 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+            </div>
+          </div>
+
+          {/* Personal Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5" />
+              <Skeleton className="h-6 w-40" />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+          </div>
+
+          {/* Company Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5" />
+              <Skeleton className="h-6 w-44" />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+
+          {/* Account Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5" />
+              <Skeleton className="h-6 w-36" />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="flex items-center space-x-2 pt-6">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
       </div>
     );
   }
