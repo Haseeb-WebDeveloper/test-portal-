@@ -92,8 +92,9 @@ export function ProposalsList({
   onEdit,
   onDelete,
   onView,
-}: ProposalsListProps) {
-  const [proposals, setProposals] = useState<Proposal[]>([]);
+  initialProposals = [] as Proposal[],
+}: ProposalsListProps & { initialProposals?: Proposal[] }) {
+  const [proposals, setProposals] = useState<Proposal[]>(initialProposals);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -144,6 +145,10 @@ export function ProposalsList({
   };
 
   useEffect(() => {
+    if (initialProposals && initialProposals.length > 0) {
+      setIsLoading(false);
+      return;
+    }
     fetchProposals();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
