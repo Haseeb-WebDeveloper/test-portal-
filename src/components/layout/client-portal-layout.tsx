@@ -23,5 +23,5 @@ export function ClientPortalLayout({ children }: ClientPortalLayoutProps) {
     return null; // AuthGuard will handle redirect
   }
 
-  return <PortalLayout user={user}>{children}</PortalLayout>;
+  return <PortalLayout user={user as { name: string; avatar: string | null; role: string }}>{children}</PortalLayout>;
 }
