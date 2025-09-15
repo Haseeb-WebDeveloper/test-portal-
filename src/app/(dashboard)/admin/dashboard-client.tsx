@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import useSWR from "swr";
 import {
   MessageSquare,
   ArrowRight,
@@ -23,8 +24,24 @@ interface DashboardClientProps {
 
 export function DashboardClient({ initialData }: DashboardClientProps) {
   const [data, setData] = useState(initialData);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const { user } = useAuth();
+
+  const { data: swrData } = useSWR(
+    "/api/admin/dashboard",
+    async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to load dashboard");
+      return (await res.json()) as DashboardData;
+    },
+    { fallbackData: initialData, revalidateOnFocus: false, keepPreviousData: true, dedupingInterval: 60000, refreshInterval: 0 }
+  );
+
+  // Always reflect SWR data
+  useEffect(() => {
+    if (swrData && swrData !== data) {
+      setData(swrData);
+    }
+  }, [swrData]);
 
   // Adapt data shapes for child components
   const clientsForSnapshot = data.clients.map((client) => ({
@@ -46,18 +63,8 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
   }));
 
   const refreshData = async () => {
-    setIsRefreshing(true);
-    try {
-      const response = await fetch("/api/admin/dashboard");
-      if (response.ok) {
-        const newData = await response.json();
-        setData(newData);
-      }
-    } catch (error) {
-      console.error("Error refreshing dashboard data:", error);
-    } finally {
-      setIsRefreshing(false);
-    }
+    // SWR will revalidate in background on demand if needed.
+    // This placeholder remains for UI compatibility.
   };
 
   return (

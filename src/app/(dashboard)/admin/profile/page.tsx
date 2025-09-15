@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import useSWR from "swr";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,36 +44,28 @@ export default function AdminProfilePage() {
     avatar: "",
   });
 
-  // Fetch detailed user profile
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch("/api/auth/profile");
-        if (response.ok) {
-          const data = await response.json();
-          setProfile(data);
-          setFormData({
-            name: data.name,
-            email: data.email,
-            role: data.role,
-            isActive: data.isActive,
-            avatar: data.avatar || "",
-          });
-        } else {
-          toast.error("Failed to fetch profile data");
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        toast.error("Error fetching profile data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // SWR cached profile fetch
+  const { data: swrProfile } = useSWR(user ? "/api/auth/profile" : null, async (url: string) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to load profile");
+    return (await res.json()) as UserProfile;
+  }, { staleTime: 60000, revalidateOnFocus: false });
 
-    if (user) {
-      fetchProfile();
+  useEffect(() => {
+    if (swrProfile) {
+      setProfile(swrProfile);
+      setFormData({
+        name: swrProfile.name,
+        email: swrProfile.email,
+        role: swrProfile.role,
+        isActive: swrProfile.isActive,
+        avatar: swrProfile.avatar || "",
+      });
+      setIsLoading(false);
+    } else if (!user) {
+      setIsLoading(false);
     }
-  }, [user]);
+  }, [swrProfile, user]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
