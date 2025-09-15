@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ArrowDown } from "lucide-react";
 import LoadMoreMessages from "./LoadMoreMessages";
 import { useMessage } from "@/store/messages";
+import { useUser } from "@/store/user";
 import { IMessage } from "@/types/messages";
 import { LIMIT_MESSAGE } from "@/constants/value";
 import { supabaseBrowser } from "@/utils/supabase/browser";
@@ -26,6 +27,7 @@ export default function ListMessages() {
   const supabase = supabaseBrowser();
   const currentRoom = useMessage((state) => state.currentRoom);
   const setMesssages = useMessage((state) => state.setMesssages);
+  const user = useUser((state) => state.user);
 
   // Load messages when room changes
   useEffect(() => {
@@ -138,6 +140,24 @@ export default function ListMessages() {
       .subscribe();
 
     return () => {
+      // Update lastReadAt when leaving/unmounting the room view
+      (async () => {
+        try {
+          if (currentRoom && user) {
+            const nowIso = new Date().toISOString();
+            const { error } = await supabase
+              .from("room_participants")
+              .update({ lastReadAt: nowIso, updatedAt: nowIso, updatedBy: user.id })
+              .eq("roomId", currentRoom.id)
+              .eq("userId", user.id);
+            if (error) {
+              console.error("Failed to update lastReadAt on unmount:", error);
+            }
+          }
+        } catch (e) {
+          console.error("Exception updating lastReadAt on unmount", e);
+        }
+      })();
       channel.unsubscribe();
     };
   }, [currentRoom, messages]);

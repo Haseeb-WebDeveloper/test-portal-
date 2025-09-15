@@ -1,169 +1,80 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Search } from 'lucide-react';
-import { ClientProposalCard } from '@/components/client/proposal-card';
-import { ProposalDetailModal } from '@/components/client/proposal-detail-modal';
+import { ClientProposalPageClient } from './proposal-page-client';
+import { prisma } from '@/lib/prisma';
 import { ProposalStatus } from '@/types/enums';
-import { useRouter } from 'next/navigation';
+import { JsonValue } from '@prisma/client/runtime/library';
+import { createClient } from '@/utils/supabase/server';
+import { redirect } from 'next/navigation';
 
-interface Proposal {
+// ISR: Revalidate every 60 seconds
+export const revalidate = 60;
+
+interface ProposalItem {
   id: string;
   title: string;
   description: string | null;
   status: ProposalStatus;
   tags: string[];
   createdAt: string;
-  media: any; // JSON field containing media files
+  media: JsonValue;
 }
 
-// Client component - no revalidate needed
+async function getInitialProposals(): Promise<ProposalItem[]> {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-export default function ClientProposalPage() {
-  const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const router = useRouter();
-
-  const fetchProposals = async () => {
-    try {
-      const params = new URLSearchParams({
-        search,
-        status: statusFilter === 'all' ? '' : statusFilter,
-        sortBy: 'updatedAt',
-        sortOrder: 'desc'
-      });
-
-      const response = await fetch(`/api/client/proposals?${params}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setProposals(data.proposals);
-      } else {
-        const errorData = await response.json();
-        console.error('🔍 API Error:', errorData);
-        throw new Error('Failed to fetch proposals');
-      }
-    } catch (error) {
-      console.error('Error fetching proposals:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProposals();
-  }, [search, statusFilter]);
-
-  const handleViewDetails = (proposal: Proposal) => {
-    setSelectedProposal(proposal);
-    setIsModalOpen(true);
-  };
-
-  const handleMessage = (proposal: Proposal) => {
-    // Navigate to messages page with proposal context
-    router.push(`/messages?proposal=${proposal.id}`);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedProposal(null);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner className="h-8 w-8" />
-      </div>
-    );
+  if (authError || !user) {
+    redirect('/login');
   }
 
+  const dbUser = await prisma.user.findUnique({
+    where: { authId: user.id },
+    select: { 
+      id: true, 
+      role: true,
+      clientMemberships: {
+        where: { isActive: true },
+        select: { clientId: true }
+      }
+    }
+  });
+
+  if (!dbUser || (dbUser.role !== 'CLIENT' && dbUser.role !== 'CLIENT_MEMBER') || !dbUser.clientMemberships.length) {
+    redirect('/unauthorized');
+  }
+
+  const clientIds = dbUser.clientMemberships.map(m => m.clientId);
+
+  const proposals = await prisma.proposal.findMany({
+    where: {
+      deletedAt: null,
+      clientId: { in: clientIds },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 12,
+  });
+
+  return proposals.map((p) => ({
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    status: p.status as unknown as ProposalStatus,
+    tags: p.tags,
+    createdAt: p.createdAt.toISOString(),
+    media: p.media,
+  }));
+}
+
+export default async function ClientProposalPage() {
+  const initialProposals = await getInitialProposals();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 lg:px-12">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Your Proposals</h1>
+        <h1 className="figma-h3">Your Proposals</h1>
         <p className="text-gray-400">View and manage your proposals</p>
       </div>
-
-      {/* Filters */}
-      <Card className="bg-gray-800 border-gray-700">
-        <CardContent className="pt-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search proposals..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                />
-              </div>
-            </div>
-
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40 bg-gray-700 border-gray-600 text-white">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="DRAFT">Draft</SelectItem>
-                <SelectItem value="SENT">Sent</SelectItem>
-                <SelectItem value="SEEN">Seen</SelectItem>
-                <SelectItem value="ACCEPTED">Accepted</SelectItem>
-                <SelectItem value="DECLINED">Declined</SelectItem>
-                <SelectItem value="EXPIRED">Expired</SelectItem>
-                <SelectItem value="WITHDRAWN">Withdrawn</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Proposals Grid */}
-      {proposals.length === 0 ? (
-        <Card className="bg-gray-800 border-gray-700">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2 text-white">No proposals found</h3>
-              <p className="text-gray-400 mb-4">
-                {search || statusFilter !== 'all' 
-                  ? 'Try adjusting your search or filter criteria' 
-                  : 'You don\'t have any proposals yet'
-                }
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {proposals.map((proposal) => (
-            <ClientProposalCard
-              key={proposal.id}
-              proposal={proposal}
-              onViewDetails={handleViewDetails}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Proposal Detail Modal */}
-      <ProposalDetailModal
-        proposal={selectedProposal}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onMessage={handleMessage}
-      />
+      <ClientProposalPageClient initialProposals={initialProposals} />
     </div>
   );
 }

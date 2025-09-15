@@ -79,7 +79,20 @@ export default function RoomSidebar() {
     fetchRooms();
   }, [user, supabase]);
 
-  const handleRoomSelect = (room: RoomSummary) => {
+  const handleRoomSelect = async (room: RoomSummary) => {
+    // Update lastReadAt for current room before switching
+    try {
+      if (currentRoom && user) {
+        await supabase
+          .from("room_participants")
+          .update({ lastReadAt: new Date().toISOString(), updatedAt: new Date().toISOString(), updatedBy: user.id })
+          .eq("roomId", currentRoom.id)
+          .eq("userId", user.id);
+      }
+    } catch (e) {
+      console.error("Failed to update lastReadAt on room switch", e);
+    }
+
     // Convert RoomSummary to Room for the store
     const fullRoom: Room = {
       id: room.id,

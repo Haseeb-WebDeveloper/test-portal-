@@ -8,8 +8,8 @@ import { getGreeting } from "@/utils/greeting";
 import { QuickActions } from "@/components/admin/quick-actions";
 import { getCurrentUser } from "@/lib/auth";
 
-// ISR: Revalidate every 60 seconds
-export const revalidate = 60;
+// ISR: Revalidate every 30 seconds
+export const revalidate = 30;
 
 async function getDashboardDataServer() {
   try {

@@ -27,10 +27,10 @@ interface NewsItem {
   };
 }
 
-interface ClientNewsListProps {}
+interface ClientNewsListProps { initialNews?: NewsItem[] }
 
-export function ClientNewsList({}: ClientNewsListProps) {
-  const [news, setNews] = useState<NewsItem[]>([]);
+export function ClientNewsList({ initialNews = [] }: ClientNewsListProps) {
+  const [news, setNews] = useState<NewsItem[]>(initialNews);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
@@ -73,6 +73,10 @@ export function ClientNewsList({}: ClientNewsListProps) {
   };
 
   useEffect(() => {
+    if (initialNews && initialNews.length > 0) {
+      setIsLoading(false);
+      return;
+    }
     fetchNews();
   }, []);
 

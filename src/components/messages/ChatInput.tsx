@@ -190,6 +190,17 @@ export default function ChatInput() {
       setMessage("");
       setAttachments([]);
       
+      // Update room's lastMessageAt
+      const nowIso = new Date().toISOString();
+      const { error: roomUpdateError } = await supabase
+        .from("rooms")
+        .update({ lastMessageAt: nowIso, updatedAt: nowIso, updatedBy: user?.id || null })
+        .eq("id", currentRoom.id);
+      
+      if (roomUpdateError) {
+        console.error("Failed to update room lastMessageAt:", roomUpdateError);
+      }
+      
     } catch (error) {
       console.error("Message insert error:", error);
       toast.error(`Failed to send message: ${(error as Error).message}`);
