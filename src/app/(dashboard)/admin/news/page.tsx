@@ -1,8 +1,6 @@
 import { NewsList } from "@/components/admin/news-list";
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@/utils/supabase/server";
 import Link from 'next/link';
-import { redirect } from "next/navigation";
 
 // ISR: Revalidate every 60 seconds
 export const revalidate = 60;
@@ -22,7 +20,7 @@ interface NewsItem {
     name: string;
     email: string;
     avatar: string | null;
-  } | null;
+  };
 }
 
 async function getNews(): Promise<NewsItem[]> {
@@ -51,6 +49,13 @@ async function getNews(): Promise<NewsItem[]> {
       ...item,
       createdAt: item.createdAt.toISOString(),
       updatedAt: item.updatedAt.toISOString(),
+      creator:
+        item.creator ?? {
+          id: "",
+          name: "Unknown",
+          email: "",
+          avatar: null,
+        },
     }));
   } catch (error) {
     console.error("Error fetching news:", error);
@@ -72,7 +77,7 @@ export default async function NewsPage() {
           Create News
         </Link>
       </div>
-      <NewsList />
+      <NewsList initialNews={initialNews} />
     </div>
   );
 }

@@ -35,10 +35,10 @@ interface NewsItem {
   };
 }
 
-interface NewsListProps {}
+interface NewsListProps { initialNews?: NewsItem[] }
 
-export function NewsList({}: NewsListProps) {
-  const [news, setNews] = useState<NewsItem[]>([]);
+export function NewsList({ initialNews = [] }: NewsListProps) {
+  const [news, setNews] = useState<NewsItem[]>(initialNews);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
@@ -86,6 +86,10 @@ export function NewsList({}: NewsListProps) {
   };
 
   useEffect(() => {
+    if (initialNews && initialNews.length > 0) {
+      setIsLoading(false);
+      return;
+    }
     fetchNews();
   }, []);
 
