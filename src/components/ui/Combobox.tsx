@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import * as React from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -12,23 +12,23 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 
 interface ComboboxProps<T> {
-  placeholder?: string
-  onSearch?: (search: string) => void
-  onSelect?: (item: T) => void
-  items: T[]
-  isLoading?: boolean
-  renderItem?: (item: T) => React.ReactNode
-  value?: T
-  className?: string
-  disabled?: boolean
+  placeholder?: string;
+  onSearch?: (search: string) => void;
+  onSelect?: (item: T) => void;
+  items: T[];
+  isLoading?: boolean;
+  renderItem?: (item: T) => React.ReactNode;
+  value?: T;
+  className?: string;
+  disabled?: boolean;
 }
 
 export function Combobox<T>({
@@ -42,24 +42,24 @@ export function Combobox<T>({
   className,
   disabled = false,
 }: ComboboxProps<T>) {
-  const [open, setOpen] = React.useState(false)
-  const [searchTerm, setSearchTerm] = React.useState("")
+  const [open, setOpen] = React.useState(false);
+  const [searchTerm, setSearchTerm] = React.useState("");
 
   const handleSearch = (search: string) => {
-    setSearchTerm(search)
-    onSearch?.(search)
-  }
+    setSearchTerm(search);
+    onSearch?.(search);
+  };
 
   const handleSelect = (item: T) => {
-    onSelect?.(item)
-    setOpen(false)
-  }
+    onSelect?.(item);
+    setOpen(false);
+  };
 
   const defaultRenderItem = (item: T) => (
     <div className="flex items-center space-x-2">
       <span>{String(item)}</span>
     </div>
-  )
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -71,11 +71,11 @@ export function Combobox<T>({
           className={cn("w-full justify-between", className)}
           disabled={disabled}
         >
-          {value ? (
-            renderItem ? renderItem(value) : String(value)
-          ) : (
-            placeholder
-          )}
+          {value
+            ? renderItem
+              ? renderItem(value)
+              : String(value)
+            : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -113,5 +113,5 @@ export function Combobox<T>({
         </Command>
       </PopoverContent>
     </Popover>
-  )
+  );
 }
