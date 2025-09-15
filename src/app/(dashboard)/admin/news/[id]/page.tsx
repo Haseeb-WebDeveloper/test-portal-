@@ -22,7 +22,7 @@ import Link from 'next/link';
 export const revalidate = 60;
 
 interface NewsPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 async function getNews(id: string) {
@@ -60,6 +60,8 @@ async function getNews(id: string) {
 }
 
 export default async function NewsDetailPage({ params }: NewsPageProps) {
+  const { id } = await params;
+  
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -77,7 +79,7 @@ export default async function NewsDetailPage({ params }: NewsPageProps) {
     redirect('/unauthorized');
   }
 
-  const news = await getNews(params.id);
+  const news = await getNews(id);
 
   if (!news) {
     notFound();

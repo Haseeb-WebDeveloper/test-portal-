@@ -27,13 +27,6 @@ export function ClientDashboardClient({ initialData }: ClientDashboardClientProp
   const [data, setData] = useState(initialData);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  console.log('🎨 ClientDashboardClient rendering with data:', {
-    contracts: data.contracts,
-    proposals: data.proposals,
-    ongoingContractsCount: data.ongoingContracts.length,
-    newsCount: data.news.length,
-    unreadMessages: data.unreadMessages
-  });
 
   const refreshData = async () => {
     setIsRefreshing(true);

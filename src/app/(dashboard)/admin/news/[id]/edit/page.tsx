@@ -8,7 +8,7 @@ import { createClient } from '@/utils/supabase/server';
 export const revalidate = 60;
 
 interface EditNewsPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 async function getNews(id: string) {
@@ -46,6 +46,7 @@ async function getNews(id: string) {
 }
 
 export default async function EditNewsPage({ params }: EditNewsPageProps) {
+  const { id } = await params;
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -63,7 +64,7 @@ export default async function EditNewsPage({ params }: EditNewsPageProps) {
     redirect('/unauthorized');
   }
 
-  const news = await getNews(params.id);
+  const news = await getNews(id);
 
   if (!news) {
     notFound();
