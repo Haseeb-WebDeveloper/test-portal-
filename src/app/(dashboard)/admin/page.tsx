@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { DashboardClient } from "./dashboard-client";
 import { getGreeting } from "@/utils/greeting";
 import { QuickActions } from "@/components/admin/quick-actions";
-import { useUser } from "@/store/user";
+import { getCurrentUser } from "@/lib/auth";
 
 // ISR: Revalidate every 60 seconds
 export const revalidate = 60;
@@ -55,7 +55,7 @@ async function getDashboardDataServer() {
 }
 
 export default async function AdminPage() {
-  const { user } = useUser();
+  const user = await getCurrentUser();
   try {
     const dashboardData = await getDashboardDataServer();
 
@@ -69,7 +69,7 @@ export default async function AdminPage() {
           }
         >
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-10">
             <div>
               <h1 className="figma-h3">
                 {getGreeting(
