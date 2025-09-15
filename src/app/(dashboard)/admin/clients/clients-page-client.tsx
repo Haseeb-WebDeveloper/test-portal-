@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useTransition } from "react";
 import { ClientsList } from "@/components/admin/clients-list";
 import { ClientWithDetails } from "@/lib/clients";
 import { SortOption, SortOrder } from "@/components/admin/clients-sort-filter";
+import { CreateClientModal } from "@/components/admin/create-client-modal";
 
 interface ClientsPageClientProps {
   initialClients: ClientWithDetails[];
@@ -99,6 +100,10 @@ export function ClientsPageClient({
 
   return (
     <div className={isPending ? "opacity-50 transition-opacity" : ""}>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="figma-h3">Our Clients</h1>
+        <CreateClientModal onClientCreated={handleClientCreated} />
+      </div>
       <ClientsList
         initialClients={paginatedClients}
         totalCount={filteredAndSortedClients.length}
