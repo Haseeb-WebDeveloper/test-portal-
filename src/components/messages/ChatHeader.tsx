@@ -1,14 +1,14 @@
 "use client";
 import React, { useState } from "react";
-import { useUser } from "@/store/user";
 import { useMessage } from "@/store/messages";
 import ChatPresence from "./ChatPresence";
+import RoomManagementModal from "./RoomManagementModal";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 import { Menu, X } from "lucide-react";
 import RoomSidebar from "./RoomSidebar";
 
 export default function ChatHeader() {
-  const user = useUser((state) => state.user);
   const currentRoom = useMessage((state) => state.currentRoom);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
@@ -42,31 +42,50 @@ export default function ChatHeader() {
               <Menu className="w-5 h-5" />
             </Button>
 
-            <div>
-              <h1 className="figma-paragraph">
-                {currentRoom ? currentRoom.name : "Messages"}
-              </h1>
+            {/* Room Avatar and Info */}
+            <div className="flex items-center gap-3">
               {currentRoom && (
-                <p className="figma-paragraph text-foreground/50">
-                  {currentRoom.description || "General discussion"}
-                </p>
+                <Avatar className="w-10 h-10">
+                  {currentRoom.avatar ? (
+                    <img 
+                      src={currentRoom.avatar} 
+                      alt={currentRoom.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      {currentRoom.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </Avatar>
               )}
+              
+              <div>
+                <h1 className="figma-paragraph">
+                  {currentRoom ? currentRoom.name : "Messages"}
+                </h1>
+                {currentRoom && (
+                  <p className="figma-paragraph text-foreground/50">
+                    {currentRoom.description || "General discussion"}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-		  <ChatPresence />
-
-            {user && (
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  {user.name?.charAt(0).toUpperCase()}
-                </div>
-                <div className="hidden sm:block">
-                  <p className="figma-paragraph font-medium">{user.name}</p>
-				  <p>{user.role}</p>
-                 
-                </div>
-              </div>
+            <ChatPresence />
+            
+            {/* Room Management */}
+            {currentRoom && (
+              <RoomManagementModal 
+                room={currentRoom}
+                onRoomUpdated={() => {
+                  // Room will be updated in the store automatically
+                }}
+                onRoomDeleted={() => {
+                  // Room will be cleared from store automatically
+                }}
+              />
             )}
           </div>
         </div>

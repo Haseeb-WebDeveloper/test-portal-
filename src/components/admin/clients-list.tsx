@@ -22,10 +22,12 @@ interface ClientsListProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   onSortChange: (sortBy: SortOption, sortOrder: SortOrder) => void;
+  onSearchChange: (search: string) => void;
   onFiltersClick: () => void;
   onClientCreated: () => void;
   sortBy: SortOption;
   sortOrder: SortOrder;
+  search: string;
 }
 
 export const ClientsList = memo(function ClientsList({
@@ -35,10 +37,12 @@ export const ClientsList = memo(function ClientsList({
   currentPage,
   onPageChange,
   onSortChange,
+  onSearchChange,
   onFiltersClick,
   onClientCreated,
   sortBy,
   sortOrder,
+  search,
 }: ClientsListProps) {
   const [clients] = useState(initialClients);
 
@@ -152,7 +156,9 @@ export const ClientsList = memo(function ClientsList({
           <ClientsSortFilter
             sortBy={sortBy}
             sortOrder={sortOrder}
+            search={search}
             onSortChange={onSortChange}
+            onSearchChange={onSearchChange}
             onFiltersClick={onFiltersClick}
           />
           <CreateClientModal onClientCreated={onClientCreated} />
@@ -193,7 +199,6 @@ export const ClientsList = memo(function ClientsList({
             <ClientCard
               key={client.id}
               client={client}
-              hasNewUpdate={index < 3} // First 3 clients have "new update" badge for demo
             />
           ))}
         </div>

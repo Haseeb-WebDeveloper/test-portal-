@@ -20,13 +20,17 @@ export default function LoadMoreMessages() {
 
 		const supabase = supabaseBrowser();
 
-		const { data, error } = await supabase
-			.from("messages")
-			.select("*,user:users(*)")
-			.eq("roomId", currentRoom.id)
-			.eq("isDeleted", false)
-			.range(from, to)
-			.order("createdAt", { ascending: false });
+	const { data, error } = await supabase
+		.from("messages")
+		.select(`
+			*,
+			user:users(*),
+			attachments:message_attachments(*)
+		`)
+		.eq("roomId", currentRoom.id)
+		.eq("isDeleted", false)
+		.range(from, to)
+		.order("createdAt", { ascending: false });
 
 		if (error) {
 			toast.error(error.message);

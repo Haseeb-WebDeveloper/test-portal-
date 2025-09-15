@@ -2,13 +2,14 @@
 
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Filter, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Filter, ArrowUpDown, ArrowUp, ArrowDown, Search } from "lucide-react";
 
 export type SortOption = 'name' | 'lastActivity';
 export type SortOrder = 'asc' | 'desc';
@@ -16,14 +17,18 @@ export type SortOrder = 'asc' | 'desc';
 interface ClientsSortFilterProps {
   sortBy: SortOption;
   sortOrder: SortOrder;
+  search: string;
   onSortChange: (sortBy: SortOption, sortOrder: SortOrder) => void;
+  onSearchChange: (search: string) => void;
   onFiltersClick: () => void;
 }
 
 export const ClientsSortFilter = memo(function ClientsSortFilter({
   sortBy,
   sortOrder,
+  search,
   onSortChange,
+  onSearchChange,
   onFiltersClick,
 }: ClientsSortFilterProps) {
   const sortOptions = [
@@ -53,6 +58,17 @@ export const ClientsSortFilter = memo(function ClientsSortFilter({
 
   return (
     <div className="flex items-center gap-3">
+      {/* Search Input */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search clients..."
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-10 w-64 border-primary/40 focus:border-primary"
+        />
+      </div>
+
       {/* Sort Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

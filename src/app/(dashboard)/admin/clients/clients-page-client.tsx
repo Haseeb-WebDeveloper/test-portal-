@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useCallback, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useCallback, useMemo, useTransition } from "react";
 import { ClientsList } from "@/components/admin/clients-list";
 import { ClientWithDetails } from "@/lib/clients";
 import { SortOption, SortOrder } from "@/components/admin/clients-sort-filter";
@@ -9,71 +8,84 @@ import { SortOption, SortOrder } from "@/components/admin/clients-sort-filter";
 interface ClientsPageClientProps {
   initialClients: ClientWithDetails[];
   totalCount: number;
-  totalPages: number;
-  currentPage: number;
-  sortBy: SortOption;
-  sortOrder: SortOrder;
-  search: string;
 }
 
 export function ClientsPageClient({
   initialClients,
   totalCount,
-  totalPages,
-  currentPage,
-  sortBy,
-  sortOrder,
-  search,
 }: ClientsPageClientProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  
+  // Client-side state for filtering, sorting, and pagination
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("name");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
 
-  const updateURL = useCallback((
-    newPage?: number,
-    newSortBy?: SortOption,
-    newSortOrder?: SortOrder,
-    newSearch?: string
-  ) => {
-    const params = new URLSearchParams(searchParams);
-    
-    if (newPage !== undefined) {
-      params.set('page', newPage.toString());
+  // Filter and sort clients on the client side
+  const filteredAndSortedClients = useMemo(() => {
+    let filtered = initialClients;
+
+    // Apply search filter
+    if (search.trim()) {
+      const searchTerm = search.toLowerCase();
+      filtered = filtered.filter(client =>
+        client.name.toLowerCase().includes(searchTerm) ||
+        (client.description && client.description.toLowerCase().includes(searchTerm)) ||
+        (client.website && client.website.toLowerCase().includes(searchTerm))
+      );
     }
-    if (newSortBy !== undefined) {
-      params.set('sortBy', newSortBy);
-    }
-    if (newSortOrder !== undefined) {
-      params.set('sortOrder', newSortOrder);
-    }
-    if (newSearch !== undefined) {
-      if (newSearch.trim()) {
-        params.set('search', newSearch.trim());
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue: string | Date;
+      let bValue: string | Date;
+
+      if (sortBy === "name") {
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+      } else if (sortBy === "lastActivity") {
+        aValue = a.lastActivity || a.updatedAt;
+        bValue = b.lastActivity || b.updatedAt;
       } else {
-        params.delete('search');
+        return 0;
       }
-    }
 
-    // Reset to page 1 when changing sort or search
-    if (newSortBy !== undefined || newSortOrder !== undefined || newSearch !== undefined) {
-      params.set('page', '1');
-    }
+      if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
 
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    router.push(newURL);
-  }, [router, searchParams]);
+    return filtered;
+  }, [initialClients, search, sortBy, sortOrder]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredAndSortedClients.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedClients = filteredAndSortedClients.slice(startIndex, endIndex);
 
   const handlePageChange = useCallback((page: number) => {
     startTransition(() => {
-      updateURL(page);
+      setCurrentPage(page);
     });
-  }, [updateURL]);
+  }, []);
 
   const handleSortChange = useCallback((newSortBy: SortOption, newSortOrder: SortOrder) => {
     startTransition(() => {
-      updateURL(undefined, newSortBy, newSortOrder);
+      setSortBy(newSortBy);
+      setSortOrder(newSortOrder);
+      setCurrentPage(1); // Reset to first page when sorting
     });
-  }, [updateURL]);
+  }, []);
+
+  const handleSearchChange = useCallback((newSearch: string) => {
+    startTransition(() => {
+      setSearch(newSearch);
+      setCurrentPage(1); // Reset to first page when searching
+    });
+  }, []);
 
   const handleFiltersClick = useCallback(() => {
     // TODO: Implement filters modal/sheet
@@ -88,16 +100,18 @@ export function ClientsPageClient({
   return (
     <div className={isPending ? "opacity-50 transition-opacity" : ""}>
       <ClientsList
-        initialClients={initialClients}
-        totalCount={totalCount}
+        initialClients={paginatedClients}
+        totalCount={filteredAndSortedClients.length}
         totalPages={totalPages}
         currentPage={currentPage}
         onPageChange={handlePageChange}
         onSortChange={handleSortChange}
         onFiltersClick={handleFiltersClick}
         onClientCreated={handleClientCreated}
+        onSearchChange={handleSearchChange}
         sortBy={sortBy}
         sortOrder={sortOrder}
+        search={search}
       />
     </div>
   );

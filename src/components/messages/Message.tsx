@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { useUser } from "@/store/user";
-import { IMessage } from "@/types/messages";
+import { IMessage, MessageType } from "@/types/messages";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import FilePreview from "./FilePreview";
 
 export default function Message({ message }: { message: IMessage }) {
   const user = useUser((state) => state.user);
@@ -50,7 +51,30 @@ export default function Message({ message }: { message: IMessage }) {
           </div>
           {message.user?.id === user?.id && <MessageMenu message={message} />}
         </div>
-        <p className="text-gray-300">{message.content}</p>
+        
+        {/* Message Content */}
+        {message.content && (
+          <p className="text-gray-300 mb-2">{message.content}</p>
+        )}
+        
+        {/* File Attachments */}
+        {message.attachments && message.attachments.length > 0 && (
+          <div className="space-y-2">
+            {message.attachments.map((attachment, index) => (
+              <FilePreview
+                key={attachment.id || index}
+                attachment={attachment}
+              />
+            ))}
+          </div>
+        )}
+        
+        {/* System Message for File-only messages */}
+        {/* {message.messageType === MessageType.FILE && !message.content && (
+          <p className="text-gray-400 text-sm italic">
+            {message.user?.name} shared {message.attachments?.length || 0} file(s)
+          </p>
+        )} */}
       </div>
     </div>
   );

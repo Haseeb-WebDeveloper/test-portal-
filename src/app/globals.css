@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -217,13 +218,13 @@
   --card-foreground: #ffffff;
   --popover: #1a1a1a;
   --popover-foreground: #ffffff;
-  --primary: #7f70ff;
+  --primary: #0f0a1dc2;
   --primary-foreground: #ffffff;
   --secondary: #2d2d2d;
   --secondary-foreground: #ffffff;
   --muted: #2d2d2d;
   --muted-foreground: #9ca3af;
-  --accent: #a395ff;
+  --accent: #0f0a1d8f;
   --accent-foreground: #ffffff;
   --destructive: #E74C3C;
   --destructive-foreground: #ffffff;

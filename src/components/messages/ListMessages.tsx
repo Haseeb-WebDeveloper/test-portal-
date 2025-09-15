@@ -34,7 +34,11 @@ export default function ListMessages() {
     const loadMessages = async () => {
       const { data, error } = await supabase
         .from("messages")
-        .select("*,user:users(*)")
+        .select(`
+          *,
+          user:users(*),
+          attachments:message_attachments(*)
+        `)
         .eq("roomId", currentRoom.id)
         .eq("isDeleted", false)
         .range(0, LIMIT_MESSAGE)
@@ -72,12 +76,20 @@ export default function ListMessages() {
                 .select("*")
                 .eq("id", payload.new.userId)
                 .single();
+              
               if (error) {
                 toast.error(error.message);
               } else {
+                // Fetch attachments for the new message
+                const { data: attachments } = await supabase
+                  .from("message_attachments")
+                  .select("*")
+                  .eq("messageId", payload.new.id);
+                
                 const newMessage = {
                   ...payload.new,
                   user: data,
+                  attachments: attachments || [],
                 };
                 addMessage(newMessage as unknown as IMessage);
               }

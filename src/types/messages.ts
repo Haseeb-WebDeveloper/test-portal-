@@ -116,13 +116,20 @@ export interface MessageAttachment {
 // SUPPORTING ENTITIES (Minimal for messaging context)
 // ============================================================================
 
+export enum UserRole {
+  PLATFORM_ADMIN = 'PLATFORM_ADMIN',
+  CLIENT = 'CLIENT',
+  CLIENT_MEMBER = 'CLIENT_MEMBER',
+  AGENCY_MEMBER = 'AGENCY_MEMBER',
+}
+
 export interface User {
   id: string;
   authId: string;
   email: string;
   name: string;
   avatar?: string;
-  role: string;
+  role: UserRole;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

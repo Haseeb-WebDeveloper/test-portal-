@@ -2,9 +2,8 @@
 import React, { useEffect, useState } from "react";
 import { useMessage } from "@/store/messages";
 import { useUser } from "@/store/user";
-import { Room, RoomSummary } from "@/types/messages";
+import { Room, RoomSummary, UserRole } from "@/types/messages";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Users, MessageSquare, MoreHorizontal, Plus } from "lucide-react";
 import {
   DropdownMenu,
@@ -13,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabaseBrowser } from "@/utils/supabase/browser";
+import CreateRoomModal from "./CreateRoomModal";
 import Image from "next/image";
 
 export default function RoomSidebar() {
@@ -103,6 +103,54 @@ export default function RoomSidebar() {
     }
   };
 
+  const refreshRooms = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("room_participants")
+        .select(
+          `
+          room:rooms(
+            id,
+            name,
+            description,
+            type,
+            avatar,
+            lastMessageAt,
+            createdAt
+          )
+        `
+        )
+        .eq("userId", user.id)
+        .eq("isActive", true);
+
+      if (error) {
+        console.error("Error fetching rooms:", error);
+        return;
+      }
+
+      const roomSummaries: RoomSummary[] = data.map((item: any) => ({
+        id: item.room.id,
+        name: item.room.name,
+        type: item.room.type,
+        avatar: item.room.avatar,
+        lastMessageAt: item.room.lastMessageAt
+          ? new Date(item.room.lastMessageAt)
+          : undefined,
+        unreadCount: 0,
+        participantCount: 0,
+      }));
+
+      setRooms(roomSummaries);
+    } catch (error) {
+      console.error("Error fetching rooms:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatTime = (date: Date) => {
     const now = new Date();
     const diffInMinutes = Math.floor(
@@ -159,15 +207,9 @@ export default function RoomSidebar() {
       <div className="p-6 border-b">
         <div className="flex items-center justify-between">
           <h2 className="figma-h3 ">Messaging</h2>
-          <button className="cursor-pointer w-10 h-10 grid place-items-center border border-primary/20 rounded-full">
-            <Image
-              src="/icons/add.svg"
-              alt="plus"
-              width={550}
-              height={550}
-              className="w-5 h-5"
-            />
-          </button>
+          {user?.role === UserRole.PLATFORM_ADMIN && (
+            <CreateRoomModal onRoomCreated={refreshRooms} />
+          )}
         </div>
       </div>
 
@@ -233,27 +275,6 @@ export default function RoomSidebar() {
                     )}
                   </div>
                 </div>
-
-                {/* More Options */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className=" hover: p-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Mark as read</DropdownMenuItem>
-                    <DropdownMenuItem>Mute notifications</DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-400">
-                      Leave room
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             ))
           )}
