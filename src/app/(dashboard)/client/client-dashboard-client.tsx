@@ -177,7 +177,7 @@ export function ClientDashboardClient({
                     data.ongoingContracts.map((contract) => (
                       <div
                         key={contract.id}
-                        className="p-4 border border-primary/20 rounded-lg"
+                        className=""
                       >
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-medium text-foreground">
