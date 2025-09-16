@@ -89,10 +89,13 @@ export function ClientsPageClient({
   }, []);
 
   const handleFiltersClick = useCallback(() => {
-    // TODO: Implement filters modal/sheet
-    console.log('Filters clicked - to be implemented');
+    // TODO: Implement filters functionality
   }, []);
 
+  const handleClientCreated = useCallback(() => {
+    // TODO: Handle client creation - refresh data or update state
+    // This could trigger a re-fetch or update the local state
+  }, []);
 
   return (
     <div className={isPending ? "opacity-50 transition-opacity" : ""}>

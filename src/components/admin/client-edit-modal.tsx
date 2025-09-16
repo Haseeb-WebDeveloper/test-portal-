@@ -148,14 +148,39 @@ export function ClientEditModal({
       // Remove email from formData since it's not editable
       const { email, ...updateData } = formData;
       
-      console.log('Updating client with data:', updateData);
+      // Only include clientMembers if there are actual changes
+      // Compare with original team members to see if anything changed
+      const originalMembers = client.teamMembers.filter(member => member.role !== 'PRIMARY_CONTACT').map(member => ({
+        id: member.id,
+        name: member.name,
+        email: member.email || "",
+        role: member.role || "member",
+      }));
+
+      const hasMemberChanges = 
+        formData.clientMembers.length !== originalMembers.length ||
+        formData.clientMembers.some((member, index) => {
+          const original = originalMembers[index];
+          return !original || 
+            member.name !== original.name ||
+            member.email !== original.email ||
+            member.role !== original.role;
+        });
+
+      // Prepare the final update data
+      const finalUpdateData = hasMemberChanges ? updateData : (() => {
+        const { clientMembers, ...rest } = updateData;
+        return rest;
+      })();
+      
+      console.log('Updating client with data:', finalUpdateData);
       
       const response = await fetch(`/api/admin/clients/${client.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updateData),
+        body: JSON.stringify(finalUpdateData),
       });
 
       if (!response.ok) {

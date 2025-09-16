@@ -1,18 +1,30 @@
-'use client';
+"use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { 
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
   Calendar,
   Paperclip,
   MessageCircle,
   FileText,
   X,
   Download,
-  Eye
-} from 'lucide-react';
-import { ProposalStatus } from '@/types/enums';
+  Eye,
+  Image,
+  Video,
+  Music,
+  Archive,
+  File,
+} from "lucide-react";
+import { ProposalStatus } from "@/types/enums";
+import { FilePreview } from "@/components/ui/file-preview";
 
 interface Proposal {
   id: string;
@@ -32,80 +44,130 @@ interface ProposalDetailModalProps {
 }
 
 const statusColors = {
-  DRAFT: 'bg-gray-100 text-gray-800',
-  SENT: 'bg-blue-100 text-blue-800',
-  SEEN: 'bg-yellow-100 text-yellow-800',
-  ACCEPTED: 'bg-green-100 text-green-800',
-  DECLINED: 'bg-red-100 text-red-800',
-  EXPIRED: 'bg-orange-100 text-orange-800',
-  WITHDRAWN: 'bg-purple-100 text-purple-800',
+  DRAFT: "bg-gray-100 text-gray-800",
+  SENT: "bg-blue-100 text-blue-800",
+  SEEN: "bg-yellow-100 text-yellow-800",
+  ACCEPTED: "bg-green-100 text-green-800",
+  DECLINED: "bg-red-100 text-red-800",
+  EXPIRED: "bg-orange-100 text-orange-800",
+  WITHDRAWN: "bg-purple-100 text-purple-800",
 };
 
 const statusLabels = {
-  DRAFT: 'Draft',
-  SENT: 'Sent',
-  SEEN: 'Seen',
-  ACCEPTED: 'Accepted',
-  DECLINED: 'Declined',
-  EXPIRED: 'Expired',
-  WITHDRAWN: 'Withdrawn',
+  DRAFT: "Draft",
+  SENT: "Sent",
+  SEEN: "Seen",
+  ACCEPTED: "Accepted",
+  DECLINED: "Declined",
+  EXPIRED: "Expired",
+  WITHDRAWN: "Withdrawn",
 };
 
-export function ProposalDetailModal({ proposal, isOpen, onClose, onMessage }: ProposalDetailModalProps) {
+export function ProposalDetailModal({
+  proposal,
+  isOpen,
+  onClose,
+  onMessage,
+}: ProposalDetailModalProps) {
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
+
   if (!proposal) return null;
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith('image/')) return '🖼️';
-    if (fileType.startsWith('video/')) return '🎥';
-    if (fileType.includes('pdf')) return '📄';
-    if (fileType.includes('word') || fileType.includes('document')) return '📝';
-    return '📎';
+  const getFileIcon = (mimeType: string) => {
+    if (mimeType && mimeType.startsWith("image/")) return Image;
+    if (mimeType && mimeType.startsWith("video/")) return Video;
+    if (mimeType && mimeType.startsWith("audio/")) return Music;
+    if (mimeType && (mimeType.includes("pdf") || mimeType.includes("document")))
+      return FileText;
+    if (mimeType && (mimeType.includes("zip") || mimeType.includes("rar")))
+      return Archive;
+    return File;
   };
+
+  // Fix: treat "image" as image/* for legacy/incorrect mimeType
+  const isImageMimeType = (mimeType: string) => {
+    if (!mimeType) return false;
+    return mimeType === "image" || mimeType.startsWith("image/");
+  };
+
+  const isVideoMimeType = (mimeType: string) => {
+    if (!mimeType) return false;
+    return mimeType === "video" || mimeType.startsWith("video/");
+  };
+
+  const isAudioMimeType = (mimeType: string) => {
+    if (!mimeType) return false;
+    return mimeType === "audio" || mimeType.startsWith("audio/");
+  };
+
+  const handleFileClick = (index: number) => {
+    setPreviewIndex(index);
+    setPreviewOpen(true);
+  };
+
+  const handleDownload = (file: any) => {
+    const link = document.createElement("a");
+    link.href = file.filePath || file.fileUrl || file.url;
+    link.download = file.fileName || file.name || "download";
+    link.target = "_blank";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Convert media files to FilePreview format
+  // Fix: If mimeType is "image", treat as "image/*" and ensure filePath is present
+  const mediaFiles =
+    proposal.media && Array.isArray(proposal.media)
+      ? proposal.media.map((file: any, index: number) => {
+          // If mimeType is "image", treat as "image/jpeg" for browser compatibility
+          let mimeType =
+            file.fileType || file.mimeType || "application/octet-stream";
+          if (mimeType === "image") mimeType = "image/jpeg";
+          if (mimeType === "video") mimeType = "video/mp4";
+          if (mimeType === "audio") mimeType = "audio/mpeg";
+          // Try to get a usable filePath
+          let filePath = file.filePath || file.fileUrl || file.url;
+          // If filePath is missing but fileName looks like a path, use it
+          if (!filePath && file.fileName && file.fileName.includes("/")) {
+            filePath = file.fileName;
+          }
+          return {
+            id: file.id || index.toString(),
+            fileName: file.fileName || file.name || "Unknown file",
+            filePath,
+            fileSize: file.fileSize || file.size || 0,
+            mimeType,
+            uploadedAt: file.uploadedAt || new Date().toISOString(),
+            uploadedBy: file.uploadedBy || { name: "Unknown" },
+          };
+        })
+      : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-gray-900 border-gray-700 text-white">
-        <DialogHeader className="space-y-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <Badge 
-                className={`${statusColors[proposal.status]} text-xs font-medium px-2 py-1`}
-              >
-                {statusLabels[proposal.status]}
-              </Badge>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 p-0 text-gray-400 hover:text-white"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          <DialogTitle className="text-2xl font-bold text-white">
-            {proposal.title}
-          </DialogTitle>
-          
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#18132A]">
+        <DialogHeader className="space-y-2">
+          <p className="text-2xl font-bold mt-3">{proposal.title}</p>
           {proposal.description && (
-            <p className="text-gray-300 text-sm leading-relaxed">
+            <p className="figma-paragraph leading-relaxed">
               {proposal.description}
             </p>
           )}
@@ -115,13 +177,12 @@ export function ProposalDetailModal({ proposal, isOpen, onClose, onMessage }: Pr
           {/* Tags */}
           {proposal.tags.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-300">Tags</h4>
               <div className="flex flex-wrap gap-2">
                 {proposal.tags.map((tag, index) => (
-                  <Badge 
-                    key={index} 
-                    variant="secondary" 
-                    className="text-xs bg-gray-700 text-gray-200 border-gray-600"
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="text-sm rounded-md font-light px-2.5 py-1 bg-transparent border border-foreground/70"
                   >
                     {tag}
                   </Badge>
@@ -132,49 +193,58 @@ export function ProposalDetailModal({ proposal, isOpen, onClose, onMessage }: Pr
 
           {/* Media Files */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-300">Attached Files</h4>
-            {proposal.media && Array.isArray(proposal.media) && proposal.media.length > 0 ? (
-              <div className="space-y-2">
-                {proposal.media.map((file: any, index: number) => (
-                  <div 
-                    key={index}
-                    className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
-                  >
-                    <div className="text-2xl">
-                      {getFileIcon(file.fileType || 'application/octet-stream')}
+            <h4 className="figma-paragraph-bold">Attached Files</h4>
+            {mediaFiles.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4">
+                {mediaFiles.map((file, index) => {
+                  const FileIcon = getFileIcon(file.mimeType);
+                  const isImage = isImageMimeType(file.mimeType);
+                  const isVideo = isVideoMimeType(file.mimeType);
+
+                  // Only show <img> if filePath is present and isImage
+                  return (
+                    <div
+                      key={file.id}
+                      className="group relativerounded-lg overflow-hidden transition-colors cursor-pointer"
+                      onClick={() => handleFileClick(index)}
+                    >
+                      {/* File Preview */}
+                      <div className="aspect-square flex items-center justify-center border border-foreground/70 rounded-lg">
+                        {isImage && file.filePath ? (
+                          <img
+                            src={file.filePath}
+                            alt={file.fileName}
+                            className="w-full h-full object-cover rounded-lg"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display =
+                                "none";
+                              (
+                                e.target as HTMLImageElement
+                              ).nextElementSibling?.classList.remove("hidden");
+                            }}
+                          />
+                        ) : isVideo && file.filePath ? (
+                          <video
+                            src={file.filePath}
+                            className="w-full h-full object-cover rounded-lg"
+                            muted
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center">
+                            <FileIcon className="h-8 w-8 mb-2" />
+                            <span className="text-xs text-center px-4 truncate">
+                              {file.fileName.length > 30 ? file.fileName.substring(0, 30) + "..." : file.fileName}
+                            </span>
+                          </div>
+                        )}
+
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white truncate">{file.fileName || file.name || 'Unknown file'}</p>
-                      <p className="text-xs text-gray-400">{formatFileSize(file.fileSize || file.size || 0)}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-gray-400 hover:text-white"
-                        onClick={() => window.open(file.fileUrl || file.url, '_blank')}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-gray-400 hover:text-white"
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.href = file.fileUrl || file.url;
-                          link.download = file.fileName || file.name || 'download';
-                          link.click();
-                        }}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 ">
                 <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No media files attached</p>
               </div>
@@ -184,10 +254,10 @@ export function ProposalDetailModal({ proposal, isOpen, onClose, onMessage }: Pr
           {/* Action Button */}
           <div className="pt-4 border-t border-gray-700">
             <div className="text-center">
-              <p className="text-sm text-gray-300 mb-4">Interested in this offer?</p>
-              <Button 
+              <p className="text-sm  mb-4">Interested in this offer?</p>
+              <Button
                 onClick={() => onMessage(proposal)}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2"
+                className="bg-purple-600 hover:bg-purple-700  px-6 py-2"
               >
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Message us
@@ -196,6 +266,15 @@ export function ProposalDetailModal({ proposal, isOpen, onClose, onMessage }: Pr
           </div>
         </div>
       </DialogContent>
+
+      {/* File Preview Modal */}
+      <FilePreview
+        files={mediaFiles}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        currentIndex={previewIndex}
+        onIndexChange={setPreviewIndex}
+      />
     </Dialog>
   );
 }

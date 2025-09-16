@@ -149,7 +149,7 @@ export const ClientsList = memo(function ClientsList({
   return (
     <div className="space-y-6">
       {/* Header with Sort and Filter - Always visible */}
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <ClientsSortFilter
             sortBy={sortBy}
@@ -160,7 +160,7 @@ export const ClientsList = memo(function ClientsList({
             onFiltersClick={onFiltersClick}
           />
         </div>
-      </div>
+      </div> */}
 
       {/* Content Area */}
       {clients.length === 0 ? (

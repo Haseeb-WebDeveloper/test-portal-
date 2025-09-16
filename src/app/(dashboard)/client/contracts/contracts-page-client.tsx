@@ -20,12 +20,18 @@ interface ContractItem {
   media: any;
 }
 
-export function ClientContractsPageClient({ initialContracts }: { initialContracts: ContractItem[] }) {
+export function ClientContractsPageClient({
+  initialContracts,
+}: {
+  initialContracts: ContractItem[];
+}) {
   const [contracts, setContracts] = useState<ContractItem[]>(initialContracts);
   const [isLoading, setIsLoading] = useState(initialContracts.length === 0);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedContract, setSelectedContract] = useState<ContractItem | null>(null);
+  const [selectedContract, setSelectedContract] = useState<ContractItem | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
@@ -88,22 +94,24 @@ export function ClientContractsPageClient({ initialContracts }: { initialContrac
   return (
     <>
       {contracts.length === 0 ? (
-        <Card className="border-gray-700">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2 text-white">No contracts found</h3>
-              <p className="text-gray-400 mb-4">
-                {search || statusFilter !== "all"
-                  ? "Try adjusting your search or filter criteria"
-                  : "You don't have any contracts yet"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold mb-2 ">No contracts found</h3>
+            <p className=" mb-4">
+              {search || statusFilter !== "all"
+                ? "Try adjusting your search or filter criteria"
+                : "You don't have any contracts yet"}
+            </p>
+          </div>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {contracts.map((contract) => (
-            <ClientContractCard key={contract.id} contract={contract} onViewDetails={handleViewDetails} />
+            <ClientContractCard
+              key={contract.id}
+              contract={contract}
+              onViewDetails={handleViewDetails}
+            />
           ))}
         </div>
       )}
@@ -117,5 +125,3 @@ export function ClientContractsPageClient({ initialContracts }: { initialContrac
     </>
   );
 }
-
-

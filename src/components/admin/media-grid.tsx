@@ -187,9 +187,6 @@ export function MediaGrid({
               // Use our fixed image type check
               const isImage = isImageMimeType(file.mimeType);
               const isVideo = isVideoFile(file.mimeType);
-
-              // console.log(file);
-
               return (
                 <Card key={file.id} className="group">
                   <CardContent className="p-3">
