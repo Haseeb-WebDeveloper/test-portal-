@@ -1,20 +1,24 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useAuth } from '@/hooks/use-auth';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AuthGuardProps {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'client';
+  requiredRole?: "admin" | "client";
   fallback?: React.ReactNode;
 }
 
-export function AuthGuard({ 
-  children, 
+export function AuthGuard({
+  children,
   requiredRole,
-  fallback = <LoadingSpinner size="lg" />
+  fallback = (
+    <div className="min-h-screen h-full bg-gradient-to-b from-[#0A031C] to-[#000000] text-foreground flex items-center justify-center">
+      {/* <LoadingSpinner size="lg" /> */}
+    </div>
+  ),
 }: AuthGuardProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -23,20 +27,20 @@ export function AuthGuard({
     if (loading) return;
 
     if (!user) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
 
-    if (requiredRole === 'admin') {
-      if (user.role !== 'PLATFORM_ADMIN' && user.role !== 'AGENCY_MEMBER') {
-        router.push('/unauthorized');
+    if (requiredRole === "admin") {
+      if (user.role !== "PLATFORM_ADMIN" && user.role !== "AGENCY_MEMBER") {
+        router.push("/unauthorized");
         return;
       }
     }
 
-    if (requiredRole === 'client') {
-      if (user.role !== 'CLIENT' && user.role !== 'CLIENT_MEMBER') {
-        router.push('/unauthorized');
+    if (requiredRole === "client") {
+      if (user.role !== "CLIENT" && user.role !== "CLIENT_MEMBER") {
+        router.push("/unauthorized");
         return;
       }
     }
@@ -50,14 +54,14 @@ export function AuthGuard({
     return <>{fallback}</>;
   }
 
-  if (requiredRole === 'admin') {
-    if (user.role !== 'PLATFORM_ADMIN' && user.role !== 'AGENCY_MEMBER') {
+  if (requiredRole === "admin") {
+    if (user.role !== "PLATFORM_ADMIN" && user.role !== "AGENCY_MEMBER") {
       return <>{fallback}</>;
     }
   }
 
-  if (requiredRole === 'client') {
-    if (user.role !== 'CLIENT' && user.role !== 'CLIENT_MEMBER') {
+  if (requiredRole === "client") {
+    if (user.role !== "CLIENT" && user.role !== "CLIENT_MEMBER") {
       return <>{fallback}</>;
     }
   }

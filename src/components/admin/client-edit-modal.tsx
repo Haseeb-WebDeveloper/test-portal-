@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useEffect, memo, useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Separator } from "@/components/ui/separator";
+import { useState, useRef, useEffect } from "react";
+import {
+  X,
+  Loader2,
+  Image as ImageIcon,
+  Trash2,
+  Pencil,
+  User,
+  Mail,
+  Plus,
+  Minus,
+} from "lucide-react";
+import { useAvatarUpload } from "@/hooks/use-avatar-upload";
 import { ClientWithDetails } from "@/lib/clients";
-import { UserRole } from "@/types/enums";
-import { X, Plus, Trash2, Upload, User, Search, Mail, Shield, Users, Loader2, Image as ImageIcon, Pencil, Edit3 } from "lucide-react";
+import { Input } from "../ui/input";
 
 interface ClientMember {
   id?: string;
@@ -21,14 +22,12 @@ interface ClientMember {
   email: string;
   role: string;
   isNew?: boolean;
-  isExisting?: boolean;
 }
 
 interface ClientEditModalProps {
   client: ClientWithDetails;
-  isOpen: boolean;
   onClose: () => void;
-  onClientUpdate: (client: ClientWithDetails) => void;
+  onClientUpdated: () => void;
 }
 
 interface ClientFormData {
@@ -40,13 +39,13 @@ interface ClientFormData {
   clientMembers: ClientMember[];
 }
 
-const AVATAR_PLACEHOLDER = "https://api.dicebear.com/7.x/lorelei-neutral/svg?seed=client";
+const AVATAR_PLACEHOLDER =
+  "https://api.dicebear.com/7.x/lorelei-neutral/svg?seed=client";
 
 export function ClientEditModal({
   client,
-  isOpen,
   onClose,
-  onClientUpdate,
+  onClientUpdated,
 }: ClientEditModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,253 +54,190 @@ export function ClientEditModal({
     description: client.description || "",
     avatar: client.avatar || "",
     website: client.website || "",
-    email: "",
-    clientMembers: client.teamMembers.map(member => ({
+    email: client.teamMembers.find(member => member.role === 'PRIMARY_CONTACT')?.email || client.teamMembers[0]?.email || "",
+    clientMembers: client.teamMembers.filter(member => member.role !== 'PRIMARY_CONTACT').map(member => ({
       id: member.id,
       name: member.name,
-      email: (member as any).email || "",
-      role: (member as any).role || "member",
+      email: member.email || "",
+      role: member.role || "member",
       isNew: false,
     })),
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [avatarUploading, setAvatarUploading] = useState(false);
-  const [memberSelectionMode, setMemberSelectionMode] = useState<'existing' | 'new'>('existing');
+  const {
+    uploadFile: uploadAvatar,
+    clearFile: clearAvatar,
+    isUploading: isUploadingAvatar,
+    previewUrl: avatarPreview,
+    setInitialFile,
+  } = useAvatarUpload({
+    folder: 'agency-portal/avatars',
+    onSuccess: (file) => {
+      setFormData((prev) => ({ ...prev, avatar: file.url }));
+    },
+    onError: (error) => {
+      setError(error);
+    },
+  });
 
-  const handleInputChange = useCallback((field: keyof ClientFormData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  }, []);
-
-  const handleAvatarUpload = useCallback(async (file: File) => {
-    setAvatarUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Upload failed");
-      }
-
-      setFormData(prev => ({
-        ...prev,
-        avatar: result.url,
-      }));
-    } catch (error: any) {
-      console.error("Upload error:", error);
-      setError(error.message || "Failed to upload avatar");
-    } finally {
-      setAvatarUploading(false);
+  // Initialize the preview with existing avatar
+  useEffect(() => {
+    if (client.avatar) {
+      setInitialFile({ url: client.avatar, type: 'image', name: 'avatar', size: 0 });
     }
-  }, []);
+  }, [client.avatar, setInitialFile]);
 
-  const handleAvatarFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setError('Please select a valid image file');
-        return;
-      }
-      
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('File size must be less than 5MB');
-        return;
-      }
-      
-      handleAvatarUpload(file);
-    }
-  }, [handleAvatarUpload]);
+  const handleInputChange = (field: keyof ClientFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
-  const addClientMember = useCallback(() => {
+  const addClientMember = () => {
     const newMember: ClientMember = {
       name: "",
       email: "",
       role: "member",
-      isNew: memberSelectionMode === 'new',
-      isExisting: memberSelectionMode === 'existing',
+      isNew: true,
     };
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       clientMembers: [...prev.clientMembers, newMember],
     }));
-  }, [memberSelectionMode]);
+  };
 
-  const removeClientMember = useCallback((index: number) => {
-    setFormData(prev => ({
+  const removeClientMember = (index: number) => {
+    setFormData((prev) => ({
       ...prev,
       clientMembers: prev.clientMembers.filter((_, i) => i !== index),
     }));
-  }, []);
+  };
 
-  const updateClientMember = useCallback((index: number, field: keyof ClientMember, value: string) => {
-    setFormData(prev => ({
+  const updateClientMember = (index: number, field: keyof ClientMember, value: string) => {
+    setFormData((prev) => ({
       ...prev,
       clientMembers: prev.clientMembers.map((member, i) =>
         i === index ? { ...member, [field]: value } : member
       ),
     }));
-  }, []);
+  };
 
-  const searchUsers = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setAvailableUsers([]);
-      return;
-    }
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
+    setError(null);
     try {
-      setLoading(true);
-      const response = await fetch(`/api/admin/users?search=${encodeURIComponent(query)}`);
-      if (response.ok) {
-        const users = await response.json();
-        setAvailableUsers(users);
-      }
-    } catch (error) {
-      console.error('Error searching users:', error);
-    } finally {
-      setLoading(false);
+      await uploadAvatar(file);
+    } catch (err) {
+      // Error is already handled by the hook's onError callback
     }
-  }, []);
+  };
 
-  const addExistingUser = useCallback(async (user: any) => {
-    const newMember: ClientMember = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: "member",
-      isNew: false,
-      isExisting: true,
-    };
-    
-    setFormData(prev => ({
-      ...prev,
-      clientMembers: [...prev.clientMembers, newMember],
-    }));
-    setSearchQuery("");
-    setAvailableUsers([]);
-  }, []);
+  const handleAvatarDelete = () => {
+    clearAvatar();
+    setFormData((prev) => ({ ...prev, avatar: "" }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
-  const createAndAddUser = useCallback(async (email: string, name: string) => {
-    try {
-      const response = await fetch('/api/auth/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, name, role: UserRole.CLIENT_MEMBER }),
-      });
-
-      if (response.ok) {
-        const user = await response.json();
-        const newMember: ClientMember = {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: "member",
-          isNew: true,
-          isExisting: false,
-        };
-        
-        setFormData(prev => ({
-          ...prev,
-          clientMembers: [...prev.clientMembers, newMember],
-        }));
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create user');
-      }
-    } catch (error) {
-      console.error('Error creating user:', error);
-      setError(error instanceof Error ? error.message : 'Failed to create user. Please try again.');
-    }
-  }, []);
-
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-
     try {
-      const response = await fetch(`/api/admin/clients/${client.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      // Remove email from formData since it's not editable
+      const { email, ...updateData } = formData;
+      
+      // Only include clientMembers if there are actual changes
+      // Compare with original team members to see if anything changed
+      const originalMembers = client.teamMembers.filter(member => member.role !== 'PRIMARY_CONTACT').map(member => ({
+        id: member.id,
+        name: member.name,
+        email: member.email || "",
+        role: member.role || "member",
+      }));
 
+      const hasMemberChanges = 
+        formData.clientMembers.length !== originalMembers.length ||
+        formData.clientMembers.some((member, index) => {
+          const original = originalMembers[index];
+          return !original || 
+            member.name !== original.name ||
+            member.email !== original.email ||
+            member.role !== original.role;
+        });
+
+      // Prepare the final update data
+      const finalUpdateData = hasMemberChanges ? updateData : (() => {
+        const { clientMembers, ...rest } = updateData;
+        return rest;
+      })();
+      
+      console.log('Updating client with data:', finalUpdateData);
+      
+      const response = await fetch(`/api/admin/clients/${client.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(finalUpdateData),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Error response:', errorData);
-        throw new Error(errorData.error || 'Failed to update client');
+        console.error('Update failed:', errorData);
+        throw new Error(errorData.error || "Failed to update client");
       }
 
-      const updatedClient = await response.json();
-      console.log('Successfully updated client:', updatedClient);
-      onClientUpdate(updatedClient);
-      onClose();
-    } catch (error) {
-      console.error('Error updating client:', error);
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      console.log('Client updated successfully');
+      onClientUpdated();
+    } catch (err) {
+      console.error('Update error:', err);
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
-  }, [client.id, formData, onClientUpdate, onClose]);
+  };
 
-  const isValid = formData.name.trim() !== "" && 
+  const isValid =
+    formData.name.trim() !== "" &&
     formData.clientMembers.every(member => 
       member.name.trim() !== "" && 
-      member.email.trim() !== "" &&
-      (member.id || member.isNew)
+      member.email.trim() !== ""
     );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
-        <DialogHeader className="pb-4">
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <Users className="w-6 h-6" />
-            Edit Client
-          </DialogTitle>
-        </DialogHeader>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+      <div className="bg-[#18132A] border border-[#2B2346] rounded-xl w-full max-w-2xl max-h-[95vh] overflow-y-auto shadow-lg">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2B2346]">
+          <h2 className="text-lg font-bold text-white">Edit Client</h2>
+          <button
+            onClick={onClose}
+            className="text-white/40 hover:text-white/70 transition-colors"
+            disabled={isLoading || isUploadingAvatar}
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-8">
+          {error && (
+            <div className="bg-red-900/10 border border-red-900/20 rounded-lg p-4">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-800 text-sm flex items-center gap-2">
-              <X className="w-4 h-4" />
-              {error}
-            </p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-8 pr-2">
           {/* Company name */}
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-base font-medium">
+            <label className="flex items-center gap-2 text-base mb-2">
               <User className="w-4 h-4" />
               Company Name
             </label>
-            <Input
+            <input
               type="text"
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
               placeholder="Company Name"
-              className="h-11"
+              className="w-full bg-transparent border border-[#2B2346] rounded-lg px-4 py-2 placeholder:text-white/40 focus:outline-none transition-all"
               required
               autoFocus
             />
@@ -309,297 +245,170 @@ export function ClientEditModal({
 
           {/* Email address */}
           <div>
-            <label className="flex items-center gap-2 text-base font-medium">
+            <label className="flex items-center gap-2 text-base mb-2">
               <Mail className="w-4 h-4" />
               Email address
             </label>
-            <Input
+            <input
               type="email"
               value={formData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
               placeholder="john@dashdark.com"
-              className="h-11"
+              className="w-full bg-[#201A36] border border-[#2B2346] rounded-lg px-4 py-2 text-white/60 cursor-not-allowed"
+              disabled
+              readOnly
             />
+            <p className="text-xs text-white/40 mt-1">Primary contact email cannot be changed</p>
           </div>
 
           {/* Website */}
           <div>
-            <label className="flex items-center gap-2 text-base font-medium">
+            <label className="flex items-center gap-2 text-base mb-2">
               <Pencil className="w-4 h-4" />
               Website
             </label>
-            <Input
+            <input
               type="url"
               value={formData.website}
               onChange={(e) => handleInputChange("website", e.target.value)}
               placeholder="https://example.com"
-              className="h-11"
+              className="w-full bg-transparent border border-[#2B2346] rounded-lg px-4 py-2 placeholder:text-white/40 focus:outline-none transition-all"
             />
           </div>
 
           {/* Photo */}
           <div>
-            <label className="flex items-center gap-2 text-base font-medium">
+            <label className="flex items-center gap-2 text-base mb-2">
               <ImageIcon className="w-4 h-4" />
               Photo
             </label>
             <div className="flex flex-col items-center gap-2">
-              <div className="relative group">
+              <div className="relative">
                 <img
-                  src={formData.avatar || AVATAR_PLACEHOLDER}
-                  alt="Client logo"
-                  className="w-28 h-28 rounded-full object-cover border-4 border-border bg-muted"
+                  src={avatarPreview || AVATAR_PLACEHOLDER}
+                  alt="Client avatar"
+                  className="w-28 h-28 rounded-full object-cover border-4 border-[#2B2346] bg-[#201A36]"
                 />
-                {avatarUploading && (
+                {/* Loading overlay */}
+                {isUploadingAvatar && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                    <LoadingSpinner size="sm" className="text-white" />
+                    <div className="relative">
+                      <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    </div>
                   </div>
                 )}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                  <label className="cursor-pointer">
-                    <Edit3 className="w-6 h-6 text-white" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarFileChange}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                  disabled={isLoading || isUploadingAvatar}
+                />
               </div>
-              <p className="text-sm text-muted-foreground text-center">
-                Click the edit icon to upload a new avatar
-              </p>
+              <div className="flex gap-4 mt-2">
+                <button
+                  type="button"
+                  className="flex items-center gap-1 text-xs text-white/80 hover:text-[#7C5CFA] transition-colors disabled:opacity-50"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading || isUploadingAvatar}
+                >
+                  <Pencil className="w-4 h-4" />
+                  {isUploadingAvatar ? "Uploading..." : "Change photo"}
+                </button>
+                {(avatarPreview && avatarPreview !== AVATAR_PLACEHOLDER) && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                    onClick={handleAvatarDelete}
+                    disabled={isLoading || isUploadingAvatar}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Short description */}
           <div>
-            <label className="flex items-center gap-2 text-base font-medium">
+            <label className="flex items-center gap-2 text-base mb-2">
               <Pencil className="w-4 h-4" />
               Short description
             </label>
-            <Textarea
+            <textarea
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
               placeholder="Write a short bio about the client..."
               rows={3}
-              className="resize-none"
+              className="w-full bg-transparent border border-[#2B2346] rounded-lg px-4 py-2 placeholder:text-white/40 focus:outline-none transition-all resize-none"
             />
           </div>
 
           {/* Client Members Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-base font-medium">
+              <label className="flex items-center gap-2 text-base">
                 <User className="w-4 h-4" />
                 Client Members
               </label>
-            </div>
-
-            {/* Member Selection Mode */}
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={memberSelectionMode === 'existing' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setMemberSelectionMode('existing')}
-                >
-                  <Search className="w-4 h-4 mr-2" />
-                  Add Existing User
-                </Button>
-                <Button
-                  type="button"
-                  variant={memberSelectionMode === 'new' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setMemberSelectionMode('new')}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create New User
-                </Button>
-              </div>
-
-              {memberSelectionMode === 'existing' && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Search existing users</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input
-                      placeholder="Search by name or email..."
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        searchUsers(e.target.value);
-                      }}
-                      className="pl-10 h-11"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {memberSelectionMode === 'new' && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Create new user</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input
-                      placeholder="Full Name"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="h-11"
-                    />
-                    <Input
-                      placeholder="Email Address"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      className="h-11"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Search Results for Existing Users */}
-            {memberSelectionMode === 'existing' && searchQuery && availableUsers.length > 0 && (
-              <div className="border rounded-lg max-h-48 overflow-y-auto bg-muted/30">
-                {loading ? (
-                  <div className="p-4 text-center text-muted-foreground flex items-center justify-center gap-2">
-                    <LoadingSpinner size="sm" />
-                    Loading users...
-                  </div>
-                ) : (
-                  <div className="divide-y">
-                    {availableUsers.map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors"
-                        onClick={() => addExistingUser(user)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
-                            {user.avatar ? (
-                              <AvatarImage src={user.avatar} alt={user.name} />
-                            ) : null}
-                            <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                              {user.name
-                                .split(" ")
-                                .map((n: string) => n.charAt(0))
-                                .join("")
-                                .toUpperCase()
-                                .slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{user.name}</p>
-                            <p className="text-sm text-muted-foreground flex items-center gap-1">
-                              <Mail className="w-3 h-3" />
-                              {user.email}
-                            </p>
-                          </div>
-                        </div>
-                        <Button size="sm" variant="ghost" className="text-primary hover:text-primary">
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Add Button */}
-            {(memberSelectionMode === 'existing' && searchQuery && availableUsers.length > 0) || 
-             (memberSelectionMode === 'new' && searchQuery && formData.email) ? (
-              <Button
+              <button
                 type="button"
-                onClick={() => {
-                  if (memberSelectionMode === 'new') {
-                    const newMember: ClientMember = {
-                      name: searchQuery,
-                      email: formData.email,
-                      role: "member",
-                      isNew: true,
-                      isExisting: false,
-                    };
-                    setFormData(prev => ({
-                      ...prev,
-                      clientMembers: [...prev.clientMembers, newMember],
-                    }));
-                    setSearchQuery("");
-                    setFormData(prev => ({ ...prev, email: "" }));
-                  } else {
-                    addClientMember();
-                  }
-                }}
-                variant="outline"
-                size="sm"
-                className="w-full text-primary hover:text-primary"
+                onClick={addClientMember}
+                className="flex items-center gap-2 text-sm text-[#7C5CFA] hover:text-[#6B42D1] transition-colors"
+                disabled={isLoading || isUploadingAvatar}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                {memberSelectionMode === 'existing' ? 'Add Selected User' : 'Add New User'}
-              </Button>
-            ) : null}
+                <Plus className="w-4 h-4" />
+                Add Member
+              </button>
+            </div>
 
-            {/* Current Client Members */}
             {formData.clientMembers.length > 0 && (
               <div className="space-y-3 max-h-48 overflow-y-auto">
                 {formData.clientMembers.map((member, index) => (
                   <div
                     key={index}
-                    className="bg-muted/30 border rounded-lg p-4 space-y-3"
+                    className="bg-[#201A36] border border-[#2B2346] rounded-lg p-4 space-y-3"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
-                          Member {index + 1}
-                        </span>
-                        {member.isExisting && (
-                          <Badge variant="secondary" className="text-xs">
-                            Existing User
-                          </Badge>
-                        )}
-                        {member.isNew && (
-                          <Badge variant="outline" className="text-xs">
-                            New User
-                          </Badge>
-                        )}
-                      </div>
-                      <Button
+                      <span className="text-sm text-white/60">
+                        Member {index + 1}
+                      </span>
+                      <button
                         type="button"
                         onClick={() => removeClientMember(index)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-400 hover:text-red-600"
+                        className="text-red-400 hover:text-red-600 transition-colors"
+                        disabled={isLoading || isUploadingAvatar}
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                        <Minus className="w-4 h-4" />
+                      </button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">
+                        <label className="text-xs text-white/60 mb-1 block">
                           Name
                         </label>
-                        <Input
+                        <input
                           type="text"
                           value={member.name}
                           onChange={(e) => updateClientMember(index, "name", e.target.value)}
                           placeholder="Full Name"
-                          className="h-9"
+                          className="w-full bg-transparent border border-[#2B2346] rounded px-3 py-2 text-sm placeholder:text-white/40 focus:outline-none transition-all"
                           required
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">
+                        <label className="text-xs text-white/60 mb-1 block">
                           Email
                         </label>
-                        <Input
+                        <input
                           type="email"
                           value={member.email}
                           onChange={(e) => updateClientMember(index, "email", e.target.value)}
                           placeholder="email@example.com"
-                          className="h-9"
+                          className="w-full bg-transparent border border-[#2B2346] rounded px-3 py-2 text-sm placeholder:text-white/40 focus:outline-none transition-all"
                           required
                         />
                       </div>
@@ -607,35 +416,18 @@ export function ClientEditModal({
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">
+                        <label className="text-xs text-white/60 mb-1 block">
                           Role
                         </label>
-                        <Select
+                        <select
                           value={member.role}
-                          onValueChange={(value) => updateClientMember(index, "role", value)}
+                          onChange={(e) => updateClientMember(index, "role", e.target.value)}
+                          className="w-full bg-transparent border border-[#2B2346] rounded px-3 py-2 text-sm focus:outline-none transition-all"
                         >
-                          <SelectTrigger className="h-9">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="member">Member</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="viewer">Viewer</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-end">
-                        {member.isNew && !member.id && (
-                          <Button
-                            type="button"
-                            onClick={() => createAndAddUser(member.email, member.name)}
-                            size="sm"
-                            className="w-full"
-                            disabled={!member.email || !member.name}
-                          >
-                            Create User
-                          </Button>
-                        )}
+                          <option value="member">Member</option>
+                          <option value="admin">Admin</option>
+                          <option value="viewer">Viewer</option>
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -644,7 +436,7 @@ export function ClientEditModal({
             )}
 
             {formData.clientMembers.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-white/40">
                 <User className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No additional members added yet</p>
                 <p className="text-xs">Click "Add Member" to add team members</p>
@@ -652,14 +444,14 @@ export function ClientEditModal({
             )}
           </div>
 
-          <Separator className="my-2" />
+          <hr className="border-[#2B2346] my-2" />
 
           {/* Footer */}
           <div className="flex items-center justify-between pt-2">
-            <Button
+            <button
               type="submit"
-              disabled={!isValid || isLoading}
-              className="bg-primary hover:bg-primary/90 px-8 py-2 h-11"
+              disabled={!isValid || isLoading || isUploadingAvatar}
+              className="bg-[#7C5CFA] hover:bg-[#6B42D1] px-8 py-2 rounded-lg transition-colors disabled:opacity-60"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -667,21 +459,22 @@ export function ClientEditModal({
                   Updating...
                 </span>
               ) : (
-                "Update Client"
+                <span className="cursor-pointer flex items-center gap-2 disabled:cursor-not-allowed">
+                  Update Client
+                </span>
               )}
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
               onClick={onClose}
-              variant="outline"
-              className="px-2 py-2 h-11"
-              disabled={isLoading}
+              className="text-white/60 hover:text-white/90 transition-colors px-2 py-2"
+              disabled={isLoading || isUploadingAvatar}
             >
               Cancel
-            </Button>
+            </button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

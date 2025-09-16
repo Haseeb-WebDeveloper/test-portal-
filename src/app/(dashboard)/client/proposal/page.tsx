@@ -72,7 +72,6 @@ export default async function ClientProposalPage() {
       {/* Header */}
       <div>
         <h1 className="figma-h3">Your Proposals</h1>
-        <p className="text-gray-400">View and manage your proposals</p>
       </div>
       <ClientProposalPageClient initialProposals={initialProposals} />
     </div>

@@ -69,7 +69,7 @@ export const ClientCard = memo(function ClientCard({
           </div>
         ) : (
           <Avatar className="w-16 h-16">
-            <AvatarFallback className="text-white font-bold text-sm">
+            <AvatarFallback className=" font-bold text-sm">
               {client.name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -159,7 +159,7 @@ export const ClientCard = memo(function ClientCard({
             ))}
             {remainingCount > 0 && (
               <Avatar className="w-8 h-8 border-2 border-background">
-                <AvatarFallback className="bg-primary text-white text-sm font-medium">
+                <AvatarFallback className="bg-primary  text-sm font-medium">
                   +{remainingCount}
                 </AvatarFallback>
               </Avatar>

@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useTransition } from "react";
 import { ClientsList } from "@/components/admin/clients-list";
 import { ClientWithDetails } from "@/lib/clients";
 import { SortOption, SortOrder } from "@/components/admin/clients-sort-filter";
+import { CreateClientModal } from "@/components/admin/create-client-modal";
 
 interface ClientsPageClientProps {
   initialClients: ClientWithDetails[];
@@ -88,13 +89,20 @@ export function ClientsPageClient({
   }, []);
 
   const handleFiltersClick = useCallback(() => {
-    // TODO: Implement filters modal/sheet
-    console.log('Filters clicked - to be implemented');
+    // TODO: Implement filters functionality
   }, []);
 
+  const handleClientCreated = useCallback(() => {
+    // TODO: Handle client creation - refresh data or update state
+    // This could trigger a re-fetch or update the local state
+  }, []);
 
   return (
     <div className={isPending ? "opacity-50 transition-opacity" : ""}>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="figma-h3">Our Clients</h1>
+        <CreateClientModal onClientCreated={handleClientCreated} />
+      </div>
       <ClientsList
         initialClients={paginatedClients}
         totalCount={filteredAndSortedClients.length}

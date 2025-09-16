@@ -49,7 +49,7 @@ async function getInitialNews(): Promise<NewsItem[]> {
 export default async function ClientNewsPage() {
   const initialNews = await getInitialNews();
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto p-6 lg:px-12">
       <ClientNewsList initialNews={initialNews} />
     </div>
   );

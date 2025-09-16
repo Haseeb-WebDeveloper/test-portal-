@@ -184,24 +184,91 @@ export async function PUT(
 
     // Update team members if provided
     if (clientMembers && Array.isArray(clientMembers)) {
-      // Use transaction to ensure data consistency
-      await prisma.$transaction(async (tx) => {
-        // First, soft delete all existing memberships
-        await tx.clientMembership.updateMany({
-          where: {
-            clientId: clientId,
-            deletedAt: null,
+      // Get current memberships to compare
+      const currentMemberships = await prisma.clientMembership.findMany({
+        where: {
+          clientId: clientId,
+          deletedAt: null,
+          isActive: true,
+        },
+        select: {
+          id: true,
+          userId: true,
+          role: true,
+          user: {
+            select: {
+              email: true,
+            },
           },
-          data: {
-            deletedAt: new Date(),
-            isActive: false,
-          },
-        });
+        },
+      });
 
-        // Process each client member
-        for (const member of clientMembers) {
-          if (member.id) {
-            // Existing user - just add membership
+      // Create maps for easier comparison
+      const currentMembersMap = new Map(
+        currentMemberships.map(m => [m.userId, { id: m.id, role: m.role, email: m.user.email }])
+      );
+      
+      const newMembersMap = new Map(
+        clientMembers
+          .filter(m => m.id) // Only existing members
+          .map(m => [m.id, { role: m.role || 'member', email: m.email }])
+      );
+
+      // Find members to remove (in current but not in new)
+      const membersToRemove = currentMemberships.filter(
+        m => !newMembersMap.has(m.userId)
+      );
+
+      // Find members to add (in new but not in current)
+      const membersToAdd = clientMembers.filter(
+        m => m.id && !currentMembersMap.has(m.id)
+      );
+
+      // Find members to update (in both but role changed)
+      const membersToUpdate = clientMembers.filter(m => {
+        if (!m.id || !currentMembersMap.has(m.id)) return false;
+        const current = currentMembersMap.get(m.id);
+        return current && current.role !== (m.role || 'member');
+      });
+
+      // Find new users to create
+      const newUsersToCreate = clientMembers.filter(
+        m => !m.id && m.email && m.name
+      );
+
+      // Only proceed if there are actual changes
+      if (membersToRemove.length > 0 || membersToAdd.length > 0 || membersToUpdate.length > 0 || newUsersToCreate.length > 0) {
+        await prisma.$transaction(async (tx) => {
+          // Remove members that are no longer in the list
+          if (membersToRemove.length > 0) {
+            await tx.clientMembership.updateMany({
+              where: {
+                id: {
+                  in: membersToRemove.map(m => m.id),
+                },
+              },
+              data: {
+                deletedAt: new Date(),
+                isActive: false,
+              },
+            });
+          }
+
+          // Update existing members whose roles changed
+          for (const member of membersToUpdate) {
+            await tx.clientMembership.update({
+              where: {
+                id: currentMembersMap.get(member.id)!.id,
+              },
+              data: {
+                role: member.role || 'member',
+                updatedAt: new Date(),
+              },
+            });
+          }
+
+          // Add existing members that weren't previously associated
+          for (const member of membersToAdd) {
             await tx.clientMembership.create({
               data: {
                 clientId: clientId,
@@ -210,8 +277,10 @@ export async function PUT(
                 isActive: true,
               },
             });
-          } else if (member.email && member.name) {
-            // New user - create user in Supabase Auth first, then in database
+          }
+
+          // Create new users and add them
+          for (const member of newUsersToCreate) {
             let user = await tx.user.findUnique({
               where: { email: member.email },
             });
@@ -255,8 +324,8 @@ export async function PUT(
               },
             });
           }
-        }
-      });
+        });
+      }
     }
 
     // Fetch updated client with all related data
