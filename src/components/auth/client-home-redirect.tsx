@@ -31,7 +31,7 @@ export function ClientHomeRedirect() {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full h-full text-foreground flex items-center justify-center">
+      <div className="min-h-screen h-full bg-gradient-to-b from-[#0A031C] to-[#000000] text-foreground flex items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     );

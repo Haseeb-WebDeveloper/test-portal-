@@ -6,12 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
@@ -23,13 +23,6 @@ import {
   Trash2,
   AlertCircle,
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface CreateClientModalProps {
   onClientCreated: () => void;
@@ -43,18 +36,10 @@ interface FormData {
   avatar: string | null;
 }
 
-interface ClientMember {
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-}
-
 interface FormErrors {
   name?: string;
   email?: string;
   general?: string;
-  members?: string;
 }
 
 export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
@@ -69,31 +54,6 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
     website: "",
     avatar: null,
   });
-  const [members, setMembers] = useState<ClientMember[]>([
-    { firstName: "", lastName: "", email: "", role: "member" },
-  ]);
-
-  // Add new member
-  const addMember = () =>
-    setMembers([
-      ...members,
-      { firstName: "", lastName: "", email: "", role: "member" },
-    ]);
-
-  // Update member
-  const updateMember = (
-    idx: number,
-    field: keyof ClientMember,
-    value: string
-  ) => {
-    const updated = [...members];
-    updated[idx][field] = value;
-    setMembers(updated);
-  };
-
-  // Remove member
-  const removeMember = (idx: number) =>
-    setMembers(members.filter((_, i) => i !== idx));
 
   const handleInputChange = useCallback(
     (field: keyof FormData, value: string) => {
@@ -190,20 +150,6 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
         }
       }
 
-      // Validate members
-      const hasInvalidMember = members.some(
-        (member) =>
-          member.firstName.trim() === "" ||
-          member.lastName.trim() === "" ||
-          member.email.trim() === "" ||
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email)
-      );
-
-      if (hasInvalidMember) {
-        newErrors.members =
-          "All member fields are required and emails must be valid";
-      }
-
       // If there are validation errors, set them and return
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
@@ -223,12 +169,6 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
             description: formData.description.trim() || null,
             website: formData.website.trim() || null,
             avatar: formData.avatar,
-            members: members.map((member) => ({
-              firstName: member.firstName.trim(),
-              lastName: member.lastName.trim(),
-              email: member.email.trim(),
-              role: member.role,
-            })),
           }),
         });
 
@@ -303,9 +243,6 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
           website: "",
           avatar: null,
         });
-        setMembers([
-          { firstName: "", lastName: "", email: "", role: "member" },
-        ]);
         setErrors({});
         setOpen(false);
         onClientCreated();
@@ -320,7 +257,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
         setLoading(false);
       }
     },
-    [formData, members, onClientCreated]
+    [formData, onClientCreated]
   );
 
   const handleReset = useCallback(() => {
@@ -331,24 +268,23 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
       website: "",
       avatar: null,
     });
-    setMembers([{ firstName: "", lastName: "", email: "", role: "member" }]);
     setErrors({});
   }, []);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-figma-active-sidebar-gradient hover:opacity-90 text-figma-text-white figma-btn-primary">
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button className="bg-gradient-to-r from-[#6B42D1] to-[#FF2AFF] hover:from-[#5A3BC7] hover:to-[#E625E6] text-white">
           <Plus className="w-4 h-4 mr-2" />
           Create new client
         </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-[600px] max-h-[90vh] border-border flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-4 border-b border-border">
-          <DialogTitle className="figma-h3 text-figma-text-white">
+      </SheetTrigger>
+      <SheetContent className="w-[400px] sm:w-[540px] bg-card border-border flex flex-col p-0">
+        <SheetHeader className="p-6 pb-4 border-b border-border">
+          <SheetTitle className="text-xl font-semibold text-foreground">
             Create New Client
-          </DialogTitle>
-        </DialogHeader>
+          </SheetTitle>
+        </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-6">
           <form
@@ -358,9 +294,9 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
           >
             {/* General Error Message */}
             {errors.general && (
-              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-md">
-                <AlertCircle className="w-4 h-4 text-red-400" />
-                <span className="figma-small text-red-400">
+              <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                <AlertCircle className="w-4 h-4 text-destructive" />
+                <span className="text-sm text-destructive">
                   {errors.general}
                 </span>
               </div>
@@ -370,28 +306,28 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
             <div className="space-y-2">
               <Label
                 htmlFor="name"
-                className="figma-small font-medium text-figma-text-white"
+                className="text-sm font-medium text-foreground"
               >
                 Full name
               </Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-figma-text-grey" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="name"
                   type="text"
                   placeholder="Enter client name"
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
-                  className={`pl-10 bg-input border-border text-figma-text-white placeholder:text-figma-text-grey ${
+                  className={`pl-10 ${
                     errors.name
-                      ? "border-red-400 focus:border-red-400"
-                      : "focus:border-figma-primary"
+                      ? "border-destructive focus:border-destructive"
+                      : ""
                   }`}
                   required
                 />
               </div>
               {errors.name && (
-                <p className="figma-small text-red-400 flex items-center gap-1">
+                <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
                   {errors.name}
                 </p>
@@ -402,28 +338,28 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
             <div className="space-y-2">
               <Label
                 htmlFor="email"
-                className="figma-small font-medium text-figma-text-white"
+                className="text-sm font-medium text-foreground"
               >
                 Email address
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-figma-text-grey" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="Enter email address"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  className={`pl-10 bg-input border-border text-figma-text-white placeholder:text-figma-text-grey ${
+                  className={`pl-10 ${
                     errors.email
-                      ? "border-red-400 focus:border-red-400 ring-1 ring-red-400/20"
-                      : "focus:border-figma-primary"
+                      ? "border-destructive focus:border-destructive ring-1 ring-destructive/20"
+                      : ""
                   }`}
                   required
                 />
               </div>
               {errors.email && (
-                <p className="figma-small text-red-400 flex items-center gap-1">
+                <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
                   {errors.email}
                 </p>
@@ -432,7 +368,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
 
             {/* Photo Upload */}
             <div className="space-y-2">
-              <Label className="figma-small font-medium text-figma-text-white">
+              <Label className="text-sm font-medium text-foreground">
                 Photo
               </Label>
               <div className="flex items-center gap-4">
@@ -442,12 +378,12 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
                       src={formData.avatar || ""}
                       alt="Client logo"
                     />
-                    <AvatarFallback className="bg-muted text-figma-text-grey">
+                    <AvatarFallback className="bg-muted text-muted-foreground">
                       <Camera className="w-6 h-6" />
                     </AvatarFallback>
                   </Avatar>
                   {uploading && (
-                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-full">
+                    <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-full">
                       <LoadingSpinner size="sm" />
                     </div>
                   )}
@@ -469,7 +405,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
                       document.getElementById("logo-upload")?.click()
                     }
                     disabled={uploading}
-                    className="border-figma-primary/40 hover:bg-figma-transparency-10 text-figma-text-white"
+                    className="border-primary/40 hover:bg-primary/10"
                   >
                     <Pencil className="w-4 h-4 mr-2" />
                     Change photo
@@ -480,7 +416,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
                       variant="outline"
                       size="sm"
                       onClick={handleRemoveImage}
-                      className="border-figma-alert/40 hover:bg-figma-alert/10 text-figma-alert"
+                      className="border-destructive/40 hover:bg-destructive/10 text-destructive"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Delete
@@ -494,7 +430,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
             <div className="space-y-2">
               <Label
                 htmlFor="website"
-                className="figma-small font-medium text-figma-text-white"
+                className="text-sm font-medium text-foreground"
               >
                 Website
               </Label>
@@ -504,7 +440,6 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
                 placeholder="https://example.com"
                 value={formData.website}
                 onChange={(e) => handleInputChange("website", e.target.value)}
-                className="bg-input border-border text-figma-text-white placeholder:text-figma-text-grey focus:border-figma-primary"
               />
             </div>
 
@@ -512,12 +447,12 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
             <div className="space-y-2">
               <Label
                 htmlFor="description"
-                className="figma-small font-medium text-figma-text-white"
+                className="text-sm font-medium text-foreground"
               >
                 Short description
               </Label>
               <div className="relative">
-                <Pencil className="absolute left-3 top-3 h-4 w-4 text-figma-text-grey" />
+                <Pencil className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Textarea
                   id="description"
                   placeholder="Write a short bio about the client..."
@@ -525,132 +460,8 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
                   onChange={(e) =>
                     handleInputChange("description", e.target.value)
                   }
-                  className="pl-10 min-h-[100px] resize-none bg-input border-border text-figma-text-white placeholder:text-figma-text-grey focus:border-figma-primary"
+                  className="pl-10 min-h-[100px] resize-none"
                 />
-              </div>
-            </div>
-
-            {/* Client Members Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="figma-small font-medium text-figma-text-white">
-                  Client Members
-                </Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addMember}
-                  className="text-figma-primary hover:text-figma-primary-purple-1 border-figma-primary/40 hover:bg-figma-transparency-10"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Member
-                </Button>
-              </div>
-
-              {errors.members && (
-                <p className="figma-small text-red-400 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {errors.members}
-                </p>
-              )}
-
-              <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-                {members.map((member, idx) => (
-                  <div
-                    key={idx}
-                    className="border border-border rounded-lg p-4 space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className="figma-small text-figma-text-grey"
-                      >
-                        Member {idx + 1}
-                      </span>
-                      {members.length > 1 && (
-                        <Button
-                          type="button"
-                          onClick={() => removeMember(idx)}
-                          variant="ghost"
-                          size="sm"
-                          className="text-figma-alert hover:text-figma-alert/80"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="figma-x-small text-figma-text-grey mb-1 block">
-                          First Name
-                        </Label>
-                        <Input
-                          type="text"
-                          value={member.firstName}
-                          onChange={(e) =>
-                            updateMember(idx, "firstName", e.target.value)
-                          }
-                          placeholder="First Name"
-                          className="h-9 bg-primary border-border text-figma-text-white placeholder:text-figma-text-grey focus:border-figma-primary"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label className="figma-x-small text-figma-text-grey mb-1 block">
-                          Last Name
-                        </Label>
-                        <Input
-                          type="text"
-                          value={member.lastName}
-                          onChange={(e) =>
-                            updateMember(idx, "lastName", e.target.value)
-                          }
-                          placeholder="Last Name"
-                          className="h-9 bg-primary border-border text-figma-text-white placeholder:text-figma-text-grey focus:border-figma-primary"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="figma-x-small text-figma-text-grey mb-1 block">
-                          Email
-                        </Label>
-                        <Input
-                          type="email"
-                          value={member.email}
-                          onChange={(e) =>
-                            updateMember(idx, "email", e.target.value)
-                          }
-                          placeholder="email@example.com"
-                          className="h-9 bg-primary border-border text-figma-text-white placeholder:text-figma-text-grey focus:border-figma-primary"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label className="figma-x-small text-figma-text-grey mb-1 block">
-                          Role
-                        </Label>
-                        <Select
-                          value={member.role}
-                          onValueChange={(value) =>
-                            updateMember(idx, "role", value)
-                          }
-                        >
-                          <SelectTrigger className="h-9 bg-primary border-border text-figma-text-white focus:border-figma-primary">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="member">Member</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           </form>
@@ -663,7 +474,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
               type="button"
               variant="ghost"
               onClick={handleReset}
-              className="text-figma-text-grey hover:text-figma-text-white figma-small"
+              className="text-muted-foreground hover:text-foreground"
             >
               Reset changes
             </Button>
@@ -680,7 +491,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
                 type="submit"
                 form="create-client-form"
                 disabled={loading}
-                className="bg-figma-active-sidebar-gradient hover:opacity-90 text-figma-text-white figma-btn-primary"
+                className="bg-gradient-to-r from-[#6B42D1] to-[#FF2AFF] hover:from-[#5A3BC7] hover:to-[#E625E6] text-white"
               >
                 {loading ? (
                   <>
@@ -694,7 +505,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
