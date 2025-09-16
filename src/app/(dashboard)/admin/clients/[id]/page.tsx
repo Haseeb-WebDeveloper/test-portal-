@@ -95,7 +95,7 @@ export default function ClientDetailsPage() {
       </div>
 
       {/* Client Info Section */}
-      <div className="bg-card rounded-xl border p-8 mb-8">
+      <div className="rounded-xl border p-8 mb-8">
         <div className="flex items-start gap-6">
           {/* Avatar */}
           <div className="flex-shrink-0">
@@ -180,7 +180,7 @@ export default function ClientDetailsPage() {
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Team Members */}
-        <div className="bg-card rounded-xl border p-6">
+        <div className="rounded-xl border p-6">
           <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Users className="w-5 h-5" />
             Client Team Members
@@ -188,7 +188,7 @@ export default function ClientDetailsPage() {
           {client.teamMembers.length > 0 ? (
             <div className="space-y-3">
               {client.teamMembers.map((member) => (
-                <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg border">
                   <Avatar className="w-10 h-10">
                     {member.avatar ? (
                       <AvatarImage src={member.avatar} alt={member.name} />
@@ -218,7 +218,7 @@ export default function ClientDetailsPage() {
         </div>
 
         {/* Client Rooms */}
-        <div className="bg-card rounded-xl border p-6">
+        <div className="rounded-xl border p-6">
           <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
             Client Rooms
@@ -226,9 +226,9 @@ export default function ClientDetailsPage() {
           {client.rooms && client.rooms.length > 0 ? (
             <div className="space-y-3">
               {client.rooms.map((room) => (
-                <div key={room.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                <div key={room.id} className="flex items-center justify-between p-3 rounded-lg border">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                       <MessageSquare className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
@@ -280,7 +280,7 @@ const StatCard = memo(function StatCard({
   color: string;
 }) {
   return (
-    <div className="bg-card rounded-xl border p-6">
+    <div className="rounded-xl border p-6">
       <div className="flex items-center gap-3 mb-2">
         <div className={color}>{icon}</div>
         <h3 className="font-semibold">{title}</h3>
@@ -301,7 +301,7 @@ function ClientDetailsSkeleton() {
         <Skeleton className="h-10 w-32" />
       </div>
 
-      <div className="bg-card rounded-xl border p-8 mb-8">
+      <div className="rounded-xl border p-8 mb-8">
         <div className="flex items-start gap-6">
           <Skeleton className="w-24 h-24 rounded-full" />
           <div className="flex-1 space-y-2">
@@ -314,7 +314,7 @@ function ClientDetailsSkeleton() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-card rounded-xl border p-6">
+          <div key={i} className="rounded-xl border p-6">
             <Skeleton className="h-6 w-32 mb-2" />
             <Skeleton className="h-8 w-16" />
           </div>
@@ -323,11 +323,11 @@ function ClientDetailsSkeleton() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="bg-card rounded-xl border p-6">
+          <div key={i} className="rounded-xl border p-6">
             <Skeleton className="h-6 w-48 mb-4" />
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, j) => (
-                <div key={j} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div key={j} className="flex items-center gap-3 p-3 rounded-lg bg-muted/90">
                   <Skeleton className="w-10 h-10 rounded-full" />
                   <div className="space-y-1">
                     <Skeleton className="h-4 w-24" />

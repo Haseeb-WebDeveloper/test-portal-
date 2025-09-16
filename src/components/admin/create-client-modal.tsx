@@ -343,7 +343,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
           Create new client
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[600px] max-h-[90vh] border-border flex flex-col p-0 overflow-hidden">
+      <DialogContent className="bg-black max-w-[600px] max-h-[90vh] border-border flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-4 border-b border-border">
           <DialogTitle className="figma-h3 text-figma-text-white">
             Create New Client
@@ -657,7 +657,7 @@ export function CreateClientModal({ onClientCreated }: CreateClientModalProps) {
         </div>
 
         {/* Action Buttons Footer */}
-        <div className="p-6 pt-4 border-t border-border bg-card">
+        <div className="p-6 pt-4 border-t border-border">
           <div className="flex items-center justify-between">
             <Button
               type="button"

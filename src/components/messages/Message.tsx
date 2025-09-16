@@ -20,7 +20,7 @@ export default function Message({ message }: { message: IMessage }) {
   const user = useUser((state) => state.user);
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-4">
       <div>
         <Avatar className="rounded-full ring-2 w-10 h-10">
           <AvatarImage
