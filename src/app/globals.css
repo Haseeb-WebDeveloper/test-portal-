@@ -123,20 +123,20 @@
   --figma-transparency-80: rgba(91, 75, 255, 0.8);
   --figma-transparency-90: rgba(91, 75, 255, 0.9);
 
-  /* Mapped to existing design tokens */
-  --background: #ffffff;
-  --foreground: #000000;
-  --card: #ffffff;
-  --card-foreground: #000000;
-  --popover: #ffffff;
-  --popover-foreground: #000000;
+  /* Mapped to existing design tokens - Dark Theme */
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --card: #1a1a1a;
+  --card-foreground: #ffffff;
+  --popover: #1a1a1a;
+  --popover-foreground: #ffffff;
   --primary: #0F0A1D;
   --primary-foreground: #ffffff;
-  --secondary: #ebe0ff;
-  --secondary-foreground: #5b4bff;
-  --muted: #f9fafb;
-  --muted-foreground: #6b7280;
-  --accent: #7f70ff;
+  --secondary: #2d2d2d;
+  --secondary-foreground: #ffffff;
+  --muted: #2d2d2d;
+  --muted-foreground: #9ca3af;
+  --accent: #a395ff;
   --accent-foreground: #ffffff;
   --destructive: #E74C3C;
   --destructive-foreground: #ffffff;
@@ -144,22 +144,22 @@
   --success-foreground: #ffffff;
   --warning: #ffa726;
   --warning-foreground: #ffffff;
-  --border: #e5e7eb;
-  --input: #f3f4f6;
-  --ring: #5b4bff;
-  --chart-1: #5b4bff;
-  --chart-2: #7f70ff;
-  --chart-3: #a395ff;
+  --border: #374151;
+  --input: #374151;
+  --ring: #7f70ff;
+  --chart-1: #7f70ff;
+  --chart-2: #a395ff;
+  --chart-3: #c7baff;
   --chart-4: #00c896;
   --chart-5: #ffa726;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #000000;
-  --sidebar-primary: #5b4bff;
+  --sidebar: #1a1a1a;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #7f70ff;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ebe0ff;
-  --sidebar-accent-foreground: #5b4bff;
-  --sidebar-border: #e5e7eb;
-  --sidebar-ring: #5b4bff;
+  --sidebar-accent: #2d2d2d;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #374151;
+  --sidebar-ring: #7f70ff;
 }
 
 .dark {

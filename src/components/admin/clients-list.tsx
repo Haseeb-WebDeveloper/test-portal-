@@ -2,8 +2,11 @@
 
 import { memo, useState, useCallback } from "react";
 import { ClientCard } from "./client-card";
-import { ClientsSortFilter, SortOption, SortOrder } from "./clients-sort-filter";
-import { CreateClientModal } from "./create-client-modal";
+import {
+  ClientsSortFilter,
+  SortOption,
+  SortOrder,
+} from "./clients-sort-filter";
 import {
   Pagination,
   PaginationContent,
@@ -24,7 +27,6 @@ interface ClientsListProps {
   onSortChange: (sortBy: SortOption, sortOrder: SortOrder) => void;
   onSearchChange: (search: string) => void;
   onFiltersClick: () => void;
-  onClientCreated: () => void;
   sortBy: SortOption;
   sortOrder: SortOrder;
   search: string;
@@ -39,23 +41,25 @@ export const ClientsList = memo(function ClientsList({
   onSortChange,
   onSearchChange,
   onFiltersClick,
-  onClientCreated,
   sortBy,
   sortOrder,
   search,
 }: ClientsListProps) {
   const [clients] = useState(initialClients);
 
-  const handlePageChange = useCallback((page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      onPageChange(page);
-    }
-  }, [onPageChange, totalPages]);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      if (page >= 1 && page <= totalPages) {
+        onPageChange(page);
+      }
+    },
+    [onPageChange, totalPages]
+  );
 
   const renderPaginationItems = () => {
     const items = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       // Show all pages if total is small
       for (let i = 1; i <= totalPages; i++) {
@@ -146,8 +150,7 @@ export const ClientsList = memo(function ClientsList({
     <div className="space-y-6">
       {/* Header with Sort and Filter - Always visible */}
       <div className="flex items-center justify-between">
-     
-        {/* <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <ClientsSortFilter
             sortBy={sortBy}
             sortOrder={sortOrder}
@@ -156,8 +159,7 @@ export const ClientsList = memo(function ClientsList({
             onSearchChange={onSearchChange}
             onFiltersClick={onFiltersClick}
           />
-          <CreateClientModal onClientCreated={onClientCreated} />
-        </div> */}
+        </div>
       </div>
 
       {/* Content Area */}
@@ -179,22 +181,20 @@ export const ClientsList = memo(function ClientsList({
               />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-foreground mb-2">No clients found</h3>
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            No clients found
+          </h3>
           <p className="text-muted-foreground">
-            {totalCount === 0 
-              ? "No clients have been added yet." 
-              : "Try adjusting your search or filter criteria."
-            }
+            {totalCount === 0
+              ? "No clients have been added yet."
+              : "Try adjusting your search or filter criteria."}
           </p>
         </div>
       ) : (
         /* Clients Grid */
         <div className="flex flex-wrap gap-6">
           {clients.map((client, index) => (
-            <ClientCard
-              key={client.id}
-              client={client}
-            />
+            <ClientCard key={client.id} client={client} />
           ))}
         </div>
       )}
@@ -207,14 +207,22 @@ export const ClientsList = memo(function ClientsList({
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => handlePageChange(currentPage - 1)}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  className={
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
               {renderPaginationItems()}
               <PaginationItem>
                 <PaginationNext
                   onClick={() => handlePageChange(currentPage + 1)}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
             </PaginationContent>

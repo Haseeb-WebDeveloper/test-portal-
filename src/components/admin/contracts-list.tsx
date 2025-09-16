@@ -97,7 +97,7 @@ const statusInfoMap: Record<
 };
 
 const progressBarGradient =
-  'bg-gradient-to-r from-primary to-[#A084E8]';
+  'bg-gradient-to-r from-figma-primary to-figma-primary-purple-2';
 
 export function ContractsList({ initialContracts = [] as Contract[] }: { initialContracts?: Contract[] }) {
   const [contracts, setContracts] = useState<Contract[]>(initialContracts);
@@ -276,7 +276,7 @@ export function ContractsList({ initialContracts = [] as Contract[] }: { initial
                       style={{
                         background:
                           contract.status === 'ACTIVE'
-                            ? '#18102B'
+                            ? 'var(--primary)'
                             : undefined,
                       }}
                     >
@@ -322,7 +322,7 @@ export function ContractsList({ initialContracts = [] as Contract[] }: { initial
                     {/* Progress Bar */}
                     <div className="space-y-2 pt-2 px-5">
                       <div className="flex items-center gap-2">
-                        <div className="w-full bg-[#2A1A47] rounded-full h-1.5 relative">
+                        <div className="w-full bg-muted rounded-full h-1.5 relative">
                           <div
                             className={`${progressBarGradient} h-2 rounded-full transition-all duration-300`}
                             style={{
@@ -338,7 +338,7 @@ export function ContractsList({ initialContracts = [] as Contract[] }: { initial
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-base border-t border-[#2A1A47] px-5 py-3 mt-2">
+                    <div className="flex items-center justify-between text-base border-t border-border px-5 py-3 mt-2">
                       <div className="flex items-center gap-2">
                         <Paperclip className="w-5 h-5" />
                         <span>

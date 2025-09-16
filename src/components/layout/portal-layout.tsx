@@ -85,7 +85,7 @@ export function PortalLayout({ children, user }: PortalLayoutProps) {
 
   const SidebarContent = useMemo(() => {
     const SidebarComponent = memo(() => (
-      <div className="pl-3 py-4 h-full flex flex-col bg-gradient-to-b from-[#0A031C] to-[#000000] bg-sidebar">
+      <div className="pl-3 py-4 h-full flex flex-col bg-figma-sidebar-gradient bg-sidebar">
         <div className="flex items-center space-x-2 mb-8">
           <Image
             src="/logo.png"
@@ -107,7 +107,7 @@ export function PortalLayout({ children, user }: PortalLayoutProps) {
                 onClick={(e) => handleNavigation(item.href, e)}
                 className={`cursor-pointer w-full flex items-center justify-between px-6 py-3.5 border-0 shadow-none text-sm rounded-l-full transition-all duration-200 hover:bg-white/10 ${
                   isActive
-                    ? "bg-gradient-to-r from-[#6B42D1] to-[#FF2AFF] text-white"
+                    ? "bg-figma-active-sidebar-gradient text-figma-text-white"
                     : ""
                 }`}
               >
@@ -155,7 +155,7 @@ export function PortalLayout({ children, user }: PortalLayoutProps) {
   }, [items, pathname, user.avatar, user.name, user.role, handleNavigation]);
 
   return (
-    <div className="min-h-screen h-full bg-gradient-to-b from-[#0A031C] to-[#000000] text-foreground">
+    <div className="min-h-screen h-full bg-figma-sidebar-gradient text-foreground">
       {/* <Suspense fallback={null}><GlobalLoading /></Suspense> */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="p-0 w-64">
@@ -169,7 +169,7 @@ export function PortalLayout({ children, user }: PortalLayoutProps) {
         </div>
         <div className="flex-1 h-full flex flex-col overflow-hidden lg:ml-64">
           <header
-            className="bg-[#00000066] px-4 py-4 lg:px-12"
+            className="bg-black/40 px-4 py-4 lg:px-12"
             style={{ borderTopLeftRadius: !isMobile ? "70px" : "0px" }}
           >
             <div className="flex items-center justify-between">
@@ -224,7 +224,7 @@ export function PortalLayout({ children, user }: PortalLayoutProps) {
               </div>
             </div>
           </header>
-          <main className={`bg-[#0F0A1D] min-h-[calc(100vh-75px)]`}>
+          <main className={`min-h-[calc(100vh-75px)]`}>
             {children}
           </main>
         </div>

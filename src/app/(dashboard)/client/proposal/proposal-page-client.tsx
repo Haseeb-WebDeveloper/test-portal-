@@ -95,7 +95,7 @@ export function ClientProposalPageClient({ initialProposals }: ClientProposalPag
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="border-gray-700">
         <CardContent className="pt-6">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
@@ -133,7 +133,7 @@ export function ClientProposalPageClient({ initialProposals }: ClientProposalPag
 
       {/* Proposals Grid */}
       {proposals.length === 0 ? (
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="border-gray-700">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2 text-white">No proposals found</h3>

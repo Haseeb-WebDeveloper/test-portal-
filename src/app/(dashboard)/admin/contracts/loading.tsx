@@ -29,14 +29,14 @@ export default function Loading() {
             </div>
             <div className="px-5 pb-4 space-y-3">
               <div className="flex items-center gap-2">
-                <div className="w-full bg-[#2A1A47] rounded-full h-1.5 relative">
+                <div className="w-full bg-muted rounded-full h-1.5 relative">
                   <div className="h-2 rounded-full" style={{ width: "60%" }}>
                     <Skeleton className="h-2 w-full rounded-full" />
                   </div>
                 </div>
                 <Skeleton className="h-4 w-10" />
               </div>
-              <div className="flex items-center justify-between text-base border-t border-[#2A1A47] pt-3">
+              <div className="flex items-center justify-between text-base border-t border-border pt-3">
                 <Skeleton className="h-5 w-20" />
                 <Skeleton className="h-5 w-24" />
               </div>

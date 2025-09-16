@@ -22,17 +22,17 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         // Figma Design System Variants
         figmaPrimary:
-          "bg-[#5B4BFF] text-white rounded-lg font-inter text-sm font-semibold hover:bg-[#7F70FF] ",
+          "bg-figma-primary text-figma-text-white rounded-lg font-inter text-sm font-semibold hover:bg-figma-primary-purple-1 ",
         figmaPrimary2:
-          "bg-[#6B42D1] text-white rounded-lg font-inter text-sm font-semibold hover:bg-[#7F70FF] ",
+          "bg-figma-primary text-figma-text-white rounded-lg font-inter text-sm font-semibold hover:bg-figma-primary-purple-1 ",
         figmaSecondary:
-          "bg-[#EBE0FF] text-[#5B4BFF] border border-[#C7BAFF] rounded-lg font-inter text-sm font-semibold hover:bg-[#C7BAFF] transition-all duration-200 ease-out",
+          "bg-figma-primary-purple-4 text-figma-primary border border-figma-primary-purple-3 rounded-lg font-inter text-sm font-semibold hover:bg-figma-primary-purple-3 transition-all duration-200 ease-out",
         figmaSuccess:
-          "bg-[#00C896] text-white rounded-lg font-inter text-sm font-semibold hover:bg-[#00C896]/90 transition-all duration-200 ease-out shadow-sm",
+          "bg-figma-success text-figma-text-white rounded-lg font-inter text-sm font-semibold hover:bg-figma-success/90 transition-all duration-200 ease-out shadow-sm",
         figmaWarning:
-          "bg-[#FFA726] text-white rounded-lg font-inter text-sm font-semibold hover:bg-[#FFA726]/90 transition-all duration-200 ease-out shadow-sm",
+          "bg-figma-warning text-figma-text-white rounded-lg font-inter text-sm font-semibold hover:bg-figma-warning/90 transition-all duration-200 ease-out shadow-sm",
         figmaAlert:
-          "bg-[#FF6B6B] text-white rounded-lg font-inter text-sm font-semibold hover:bg-[#FF6B6B]/90 transition-all duration-200 ease-out shadow-sm",
+          "bg-figma-alert text-figma-text-white rounded-lg font-inter text-sm font-semibold hover:bg-figma-alert/90 transition-all duration-200 ease-out shadow-sm",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

@@ -93,10 +93,6 @@ export function ClientsPageClient({
     console.log('Filters clicked - to be implemented');
   }, []);
 
-  const handleClientCreated = useCallback(() => {
-    // Refresh the page to show the new client
-    window.location.reload();
-  }, []);
 
   return (
     <div className={isPending ? "opacity-50 transition-opacity" : ""}>
@@ -112,7 +108,6 @@ export function ClientsPageClient({
         onPageChange={handlePageChange}
         onSortChange={handleSortChange}
         onFiltersClick={handleFiltersClick}
-        onClientCreated={handleClientCreated}
         onSearchChange={handleSearchChange}
         sortBy={sortBy}
         sortOrder={sortOrder}
